@@ -69,3 +69,21 @@ It checks every 0.3 s and also whenever a nameplate appears. This means:
 
 `python deploy.py` copies `NpcSonar/` into your WoW AddOns folder
 (`WOW_ROOT` is set at the top of the script).
+
+## Releasing
+
+Releases work the same way as in the ChattyLittleNpc and Tank Tools repos:
+
+1. Bump `## Version:` in `NpcSonar/NpcSonar.toc` and get the change onto `main`.
+2. From `main`, run `python release.py` for a dry run, then
+   `python release.py --create`. Add `--type beta` or `--type alpha` for a
+   pre-release.
+3. The script tags the commit (`v<version>`, plus `-beta`/`-alpha`), pushes the
+   tag and creates a GitHub Release.
+4. `.github/workflows/release.yml` then zips `NpcSonar/` and attaches
+   `NpcSonar-<tag>.zip` to that release.
+5. CurseForge packages the tagged commit through the repo's webhook, using
+   `pkgmeta.yaml`: the folder is named `NpcSonar`, and dev files, docs and
+   `assets/` are left out. Tags without a suffix are Releases; `-beta` and
+   `-alpha` tags become Beta and Alpha files. The one-time webhook setup is
+   described in `../curseforge-packaging-setup.md`.

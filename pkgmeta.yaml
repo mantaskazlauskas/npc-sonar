@@ -1,0 +1,11 @@
+package-as: NpcSonar
+ignore:
+  - deploy.py
+  - release.py
+  - README.md
+  - CURSEFORGE.md
+  - assets
+  - .vscode
+  - .github
+  - .venv
+  - __pycache__
