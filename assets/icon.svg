@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b2130"/>
+      <stop offset="1" stop-color="#0b0e14"/>
+    </linearGradient>
+    <radialGradient id="scope" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#14304a"/>
+      <stop offset="0.75" stop-color="#0f1c2b"/>
+      <stop offset="1" stop-color="#0a121c"/>
+    </radialGradient>
+    <radialGradient id="blipGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffb366" stop-opacity="0.9"/>
+      <stop offset="0.35" stop-color="#ff7a3d" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#ff7a3d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bezel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7fd3ff"/>
+      <stop offset="1" stop-color="#2a8fcc"/>
+    </linearGradient>
+    <clipPath id="scopeClip"><circle cx="200" cy="200" r="150"/></clipPath>
+  </defs>
+
+  <!-- Tile -->
+  <rect x="8" y="8" width="384" height="384" rx="76" fill="url(#bg)"/>
+  <rect x="8" y="8" width="384" height="384" rx="76" fill="none" stroke="#2c3446" stroke-width="4"/>
+
+  <!-- Scope face -->
+  <circle cx="200" cy="200" r="150" fill="url(#scope)"/>
+
+  <g clip-path="url(#scopeClip)">
+    <!-- Range rings and crosshair -->
+    <g fill="none" stroke="#40b3f2">
+      <circle cx="200" cy="200" r="112" stroke-opacity="0.35" stroke-width="3"/>
+      <circle cx="200" cy="200" r="74" stroke-opacity="0.35" stroke-width="3"/>
+      <circle cx="200" cy="200" r="36" stroke-opacity="0.35" stroke-width="3"/>
+      <line x1="50" y1="200" x2="350" y2="200" stroke-opacity="0.22" stroke-width="2.5"/>
+      <line x1="200" y1="50" x2="200" y2="350" stroke-opacity="0.22" stroke-width="2.5"/>
+    </g>
+
+    <!-- Sweep trail -->
+        <path d="M200 200 L136.61 64.05 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L139.59 62.70 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L142.60 61.42 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L145.63 60.20 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L148.70 59.05 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L151.78 57.96 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L154.89 56.94 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L158.03 55.99 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L161.18 55.11 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L164.35 54.30 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L167.53 53.56 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L170.74 52.88 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L173.95 52.28 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L177.18 51.75 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L180.42 51.28 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L183.67 50.89 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L186.93 50.57 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L190.19 50.32 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L193.46 50.14 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L196.73 50.04 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L200.00 50.00 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L203.27 50.04 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L206.54 50.14 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L209.81 50.32 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L213.07 50.57 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L216.33 50.89 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L219.58 51.28 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L222.82 51.75 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L226.05 52.28 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L229.26 52.88 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L232.47 53.56 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L235.65 54.30 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L238.82 55.11 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L241.97 55.99 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L245.11 56.94 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L248.22 57.96 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L251.30 59.05 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L254.37 60.20 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L257.40 61.42 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L260.41 62.70 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L263.39 64.05 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L266.34 65.47 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L269.26 66.95 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L272.15 68.49 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L275.00 70.10 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L277.82 71.76 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L280.59 73.49 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L283.34 75.28 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L286.04 77.13 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L288.70 79.03 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L291.31 81.00 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L293.89 83.02 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L296.42 85.09 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L298.90 87.22 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L301.34 89.41 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L303.73 91.65 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L306.07 93.93 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L308.35 96.27 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L310.59 98.66 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+    <path d="M200 200 L312.78 101.10 A150 150 0 0 1 314.91 103.58 Z" fill="#40b3f2" fill-opacity="0.017"/>
+
+    <!-- Older contact, fading -->
+    <circle cx="141.74" cy="221.21" r="7" fill="#40b3f2" fill-opacity="0.45"/>
+
+    <!-- Found contact -->
+    <circle cx="250.87" cy="118.59" r="44" fill="url(#blipGlow)"/>
+    <circle cx="250.87" cy="118.59" r="24" fill="none" stroke="#ff9a52" stroke-width="3" stroke-opacity="0.55"/>
+    <circle cx="250.87" cy="118.59" r="12" fill="#ffb366"/>
+    <circle cx="250.87" cy="118.59" r="5" fill="#fff4e6"/>
+  </g>
+
+  <!-- Sweep line -->
+  <line x1="200" y1="200" x2="314.91" y2="103.58" stroke="#bfe9ff" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="200" cy="200" r="9" fill="#bfe9ff"/>
+
+  <!-- Bezel -->
+  <circle cx="200" cy="200" r="157" fill="none" stroke="url(#bezel)" stroke-width="14"/>
+  <circle cx="200" cy="200" r="165" fill="none" stroke="#0b0e14" stroke-width="2" stroke-opacity="0.7"/>
+</svg>

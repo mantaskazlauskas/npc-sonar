@@ -1,0 +1,20 @@
+## Interface: 120105, 120100, 50503, 38002, 20506, 16001, 11508
+## Title: NPC Sonar
+## Notes: Scans for NPCs by name, shows an icon over their nameplates, and gives you a one-click sonar badge that targets and marks them.
+## Author: mmantas
+## Version: 0.1.0
+## SavedVariables: NpcSonarDB
+## Category: Quests
+## IconTexture: Interface\TargetingFrame\UI-RaidTargetingIcon_8
+## AddonCompartmentFunc: NpcSonar_OnAddonCompartmentClick
+
+# Core first: the other files call into it at runtime, and Core only calls
+# their hooks (ns.SetStatus, ns.Refresh, ns.UpdateMarkButton,
+# ns.UpdateIndicator) once something is scanning, by which point they have
+# loaded. Style before the files that build widgets from it; MarkButton
+# reads ns.Style at file scope.
+# Bindings.xml is picked up by the client automatically and is not listed.
+Core.lua
+Style.lua
+UI.lua
+MarkButton.lua
