@@ -5,8 +5,7 @@
 ## Version: 0.1.0
 ## SavedVariables: NpcSonarDB
 ## Category: Quests
-## IconTexture: Interface\TargetingFrame\UI-RaidTargetingIcon_8
-## AddonCompartmentFunc: NpcSonar_OnAddonCompartmentClick
+## IconTexture: Interface\AddOns\NpcSonar\Media\sonar_search
 
 # Core first: the other files call into it at runtime, and Core only calls
 # their hooks (ns.SetStatus, ns.Refresh, ns.UpdateMarkButton,
@@ -18,3 +17,4 @@ Core.lua
 Style.lua
 UI.lua
 MarkButton.lua
+Launchers.lua

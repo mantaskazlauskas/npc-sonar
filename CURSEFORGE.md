@@ -23,9 +23,11 @@
 | `/npcsonar` (or `/npcd`) | Open or close the window |
 | `/npcsonar <name>` | Start scanning for a name right away |
 | `/npcsonar stop` / `/npcsonar start` | Stop or resume the scan |
+| `/npcsonar minimap` | Hide or show the minimap button |
 | `/npcsonar debug` | Print what the addon can see, for bug reports |
 
 **Badge controls:** left-click targets and marks. Right-click opens the window. Right-drag moves the badge.
+**Minimap button:** left-click opens the window, and right-click starts or stops the scan. Drag it around the minimap edge to move it. It works with minimap button collectors, and it's also listed in Blizzard's addons button where the game has one.
 **Keybinding:** *Key Bindings → AddOns → NPC Sonar*.
 
 ## Good to know

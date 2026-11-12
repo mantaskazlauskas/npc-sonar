@@ -6,9 +6,12 @@ alerts you. It's meant for quests where the mob you need patrols.
 
 ## Usage
 
-- `/npcsonar` (or the shortcut `/npcd`) opens or closes the window. On retail it's also in the addon compartment.
+- `/npcsonar` (or the shortcut `/npcd`) opens or closes the window.
+- **Minimap button:** left-click opens the window, and right-click starts or stops the scan. If no name is set yet, right-click opens the window instead. Hover to see what it's scanning for. Drag it around the minimap edge to move it. Minimap button collectors, such as Enhance QoL's button sink, pick it up too.
+- **Addons button by the minimap:** where the game has Blizzard's addon compartment, NPC Sonar is also listed there, with the same clicks.
 - `/npcsonar <name>` starts scanning for that name. Separate several names with commas.
 - `/npcsonar stop` and `/npcsonar start` stop and resume.
+- `/npcsonar minimap` hides or shows the minimap button.
 - **Target** copies your current target's name into the box.
 - **Partial name match** matches any NPC whose name contains the text, so `ashar` finds "Shade of Ashar".
 - When a match is found, you get a chat line, an on-screen raid-warning message and a sound.

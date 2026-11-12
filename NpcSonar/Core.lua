@@ -111,6 +111,8 @@ function ns.SetStatus(_) end
 function ns.Refresh() end
 function ns.UpdateMarkButton() end
 function ns.UpdateIndicator() end
+function ns.SetupLaunchers() end
+function ns.ToggleMinimapButton() end
 
 ns.found = false  -- a match is in range right now; drives the badge colour
 
@@ -353,6 +355,7 @@ events:SetScript("OnEvent", function(self, event, arg1)
         self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
         self:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
         self:RegisterEvent("PLAYER_TARGET_CHANGED")
+        ns.SetupLaunchers()
         return
     end
     Scan()
@@ -369,13 +372,11 @@ SlashCmdList.NPCSONAR = function(msg)
         ns.Stop()
     elseif cmd == "start" then
         ns.Start()
+    elseif cmd == "minimap" then
+        ns.ToggleMinimapButton()
     elseif cmd == "debug" then
         ns.Debug()
     else
         ns.Start(msg)
     end
-end
-
-function NpcSonar_OnAddonCompartmentClick()
-    ns.ToggleWindow()
 end
