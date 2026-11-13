@@ -25,6 +25,7 @@ local DEFAULTS = {
     partial = false,  -- substring match instead of whole-name match
     pinTarget = true, -- while scanning, hold the target's plate at the screen edge (Pin.lua)
     doneOnDeath = true, -- stop looking for a name once an NPC found under it dies
+    radar   = true,   -- detect matching rares on the minimap and point at them (Radar.lua)
     sound   = "RAID_WARNING",  -- a SOUNDKIT key, or "NONE"
 }
 
@@ -137,6 +138,10 @@ function ns.Refresh() end
 function ns.UpdateMarkButton() end
 function ns.UpdateIndicator() end
 function ns.SetupLaunchers() end
+function ns.RadarScan() end
+function ns.RadarTick() end
+function ns.ResetRadar() end
+function ns.RadarStatus() return nil end
 function ns.ToggleMinimapButton() end
 
 ns.found = false  -- a match is in range right now; drives the badge colour
@@ -188,6 +193,7 @@ local function WantedFor(name)
     end
     return nil
 end
+ns.WantedFor = WantedFor
 
 -- Returns the unit's display name when it is a living NPC we are looking for,
 -- and the wanted entry it matched. The second return is true instead when the
@@ -230,6 +236,12 @@ local PING_PERIOD   = 1.6                   -- time between pings of one ring
 local PING_SCALE    = { 0.6, 2.4 }          -- relative to OVERLAY_SIZE
 
 assert(PING_PERIOD >= PING_DURATION, "PING_PERIOD must cover PING_DURATION")
+
+-- Colour for a wanted entry's rings and radar arrow: its marker's colour when
+-- the name has a {tag}, else the sonar blue.
+function ns.ColorFor(want)
+    return ICON_COLORS[wantedIcon[want]] or PING_COLOR
+end
 
 local overlays = {}
 
@@ -304,7 +316,7 @@ local function ShowOverlay(unit, want)
         overlays[plate] = o
     end
     o.tex:SetTexture(ns.IconPath(ns.IconFor(want)))
-    local color = ICON_COLORS[wantedIcon[want]] or PING_COLOR
+    local color = ns.ColorFor(want)
     for _, ag in ipairs(o.pings) do
         ag:GetParent():SetVertexColor(color[1], color[2], color[3])
     end
@@ -324,15 +336,14 @@ end
 
 --------------------------------------------------------------------------------
 
-local function Alert(unit, name, want)
-    local guid = Clean(UnitGUID(unit))
-    if guid and alerted[guid] then return end
+-- Prints msg, shows it as a raid warning, plays the alert sound and flashes
+-- the taskbar. Returns false without doing anything inside the cooldown, so
+-- a pack of matches is one alert. Shared with the radar.
+function ns.Announce(msg)
     local now = GetTime()
-    if now - lastAlertAt < ALERT_COOLDOWN then return end
-    if guid then alerted[guid] = want end
+    if now - lastAlertAt < ALERT_COOLDOWN then return false end
     lastAlertAt = now
 
-    local msg = ("Found %s %s"):format(ns.IconString(ns.IconFor(want)), name)
     ns.Print(msg)
     if RaidNotice_AddMessage and RaidWarningFrame then
         RaidNotice_AddMessage(RaidWarningFrame, msg, ChatTypeInfo["RAID_WARNING"])
@@ -341,6 +352,14 @@ local function Alert(unit, name, want)
     -- Flashes the taskbar entry; the client does nothing when the game
     -- window already has focus.
     if FlashClientIcon then FlashClientIcon() end
+    return true
+end
+
+local function Alert(unit, name, want)
+    local guid = Clean(UnitGUID(unit))
+    if guid and alerted[guid] then return end
+    if not ns.Announce(("Found %s %s"):format(ns.IconString(ns.IconFor(want)), name)) then return end
+    if guid then alerted[guid] = want end
 end
 
 -- An NPC we announced is now dead (you usually still have it targeted, or
@@ -371,6 +390,7 @@ local function CheckDeath(unit)
     end
     ns.Print(("%s is dead. Still looking for: %s"):format(name, table.concat(wanted, ", ")))
     ns.UpdateMarkButton()
+    ns.RadarScan()
     return false
 end
 
@@ -390,6 +410,7 @@ local function Scan()
         end
     end
     HideOverlays(true)
+    ns.RadarTick()
 
     local found = firstName ~= nil
     if found ~= ns.found then
@@ -406,7 +427,7 @@ local function Scan()
         ns.SetStatus("|cffff8000NPC names are hidden from addons here,|r so no auto-detect. "
             .. "Clicking the |cffffd100sonar badge|r still finds and marks the NPC.")
     else
-        ns.SetStatus("Searching...")
+        ns.SetStatus(ns.RadarStatus() or "Searching...")
     end
 end
 
@@ -475,6 +496,7 @@ function ns.Start(text)
     HideOverlays(false)
     if not ticker then ticker = C_Timer.NewTicker(SCAN_INTERVAL, Scan) end
     ns.UpdatePinning()
+    ns.ResetRadar()
     WarnIfPlatesOff()
     ns.SetStatus("Searching...")
     ns.Refresh()
@@ -489,6 +511,7 @@ function ns.Stop()
     ns.scanning = false
     if ticker then ticker:Cancel(); ticker = nil end
     ns.UpdatePinning()
+    ns.RadarScan()  -- hides the arrow now that nothing is scanning
     HideOverlays(false)
     ns.SetStatus("Stopped.")
     ns.Refresh()

@@ -12,7 +12,7 @@ local C = S.C
 local WIDTH, PAD = 320, 12
 
 local frame, nameBox, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, pinToggle, deathToggle, soundLabel
+local partialToggle, pinToggle, deathToggle, radarToggle, soundLabel
 local tiles = {}
 
 local function Tooltip(widget, text)
@@ -196,9 +196,19 @@ local function Build()
     deathToggle = S.Toggle(frame, "Stop looking for an NPC once it dies", function(on)
         ns.db.doneOnDeath = on
     end)
-    deathToggle:SetPoint("TOPLEFT", PAD, Row(18, 12))
+    deathToggle:SetPoint("TOPLEFT", PAD, Row(18, 6))
     Tooltip(deathToggle, "When a found NPC dies, drop its name from this scan.\n"
         .. "The scan stops once every name is done.")
+
+    radarToggle = S.Toggle(frame, "Track rares on the minimap with an arrow", function(on)
+        ns.db.radar = on
+        ns.RadarScan()
+    end)
+    radarToggle:SetPoint("TOPLEFT", PAD, Row(18, 12))
+    Tooltip(radarToggle, "Rares and other special NPCs show on the minimap long before\n"
+        .. "they get a nameplate. When one matches, you are alerted and an\n"
+        .. "arrow points at it with the distance. Drag the arrow to move it.\n"
+        .. "Doesn't work inside instances.")
 
     -- Alert sound: < name > stepper. Every step plays the sound so you hear
     -- what you picked; clicking the name plays it again.
@@ -297,6 +307,7 @@ function ns.Refresh()
     partialToggle:SetChecked(ns.db.partial)
     pinToggle:SetChecked(ns.db.pinTarget)
     deathToggle:SetChecked(ns.db.doneOnDeath)
+    radarToggle:SetChecked(ns.db.radar)
     local soundName = "None"
     for _, s in ipairs(ns.SoundChoices()) do
         if s.key == ns.db.sound then soundName = s.label end

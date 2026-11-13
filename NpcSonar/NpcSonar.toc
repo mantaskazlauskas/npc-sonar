@@ -11,11 +11,12 @@
 # their hooks (ns.SetStatus, ns.Refresh, ns.UpdateMarkButton,
 # ns.UpdateIndicator) once something is scanning, by which point they have
 # loaded. Style before the files that build widgets from it; MarkButton
-# reads ns.Style at file scope.
+# and Radar read ns.Style at file scope.
 # Bindings.xml is picked up by the client automatically and is not listed.
 Core.lua
 Pin.lua
 Style.lua
 UI.lua
 MarkButton.lua
+Radar.lua
 Launchers.lua
