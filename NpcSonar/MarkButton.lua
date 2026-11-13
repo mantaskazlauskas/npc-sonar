@@ -18,6 +18,9 @@
 --   /targetexact <name>          one line per wanted name (/target if partial)
 --   /tm [exists,nodead] <icon>
 --
+-- When names carry their own {tag} markers, that block is repeated per name
+-- instead; see BuildMacro.
+--
 -- Secure frames can't be shown, hidden, moved or have attributes changed in
 -- combat, so those changes wait for combat to end. Colours, textures and the
 -- sweep are cosmetic and update at any time. The badge is parented to UIParent
@@ -122,13 +125,34 @@ end)
 local placed = false
 local pending = false
 
+-- With one marker for every name, target whichever is around and mark it.
+-- When names carry their own {tag} markers, each name is targeted and marked
+-- in turn, with /cleartarget before each so a miss can't put that name's
+-- marker on the previous NPC. Names go last-to-first so the first listed is
+-- marked last; a final pass of /targetexact (or /target) lines without
+-- /cleartarget, which keep the current target when nothing matches, leaves
+-- you targeting the first-listed name that is around.
 local function BuildMacro()
     local cmd = ns.db.partial and "/target " or "/targetexact "
-    local lines = { "/cleartarget" }
-    for _, name in ipairs(ns.WantedNames()) do
-        lines[#lines + 1] = cmd .. name
+    local names = ns.WantedNames()
+    local lines
+    if ns.HasNameIcons() then
+        lines = {}
+        for i = #names, 1, -1 do
+            lines[#lines + 1] = "/cleartarget"
+            lines[#lines + 1] = cmd .. names[i]
+            lines[#lines + 1] = "/tm [exists,nodead] " .. ns.IconFor(names[i])
+        end
+        for i = #names, 1, -1 do
+            lines[#lines + 1] = cmd .. names[i]
+        end
+    else
+        lines = { "/cleartarget" }
+        for _, name in ipairs(names) do
+            lines[#lines + 1] = cmd .. name
+        end
+        lines[#lines + 1] = "/tm [exists,nodead] " .. ns.db.icon
     end
-    lines[#lines + 1] = "/tm [exists,nodead] " .. ns.db.icon
     -- Pings are retail-only. Leave the line out where the system doesn't
     -- exist, or every click would print an unknown-command error.
     if C_Ping then
@@ -153,7 +177,10 @@ local function Apply()
 end
 
 function ns.UpdateMarkButton()
-    marker:SetTexture(ns.IconPath(ns.db.icon))
+    -- The corner shows what a click marks: with per-name markers, the
+    -- first-listed name's, since that is the target a click leaves you on.
+    local first = ns.WantedNames()[1]
+    marker:SetTexture(ns.IconPath(first and ns.IconFor(first) or ns.db.icon))
     if InCombatLockdown() then
         pending = true
         return

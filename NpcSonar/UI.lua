@@ -118,6 +118,10 @@ local function Build()
 
     nameBox = S.Input(frame, 1, 26, "e.g. Shade of Ashar, Grimtooth")
     nameBox:SetPoint("TOPLEFT", PAD, rowY)
+    Tooltip(nameBox, "Separate names with commas.\n"
+        .. "Add a marker after a name to give it its own, as in chat:\n"
+        .. "Grimtooth {skull}, Shade of Ashar {star}\n"
+        .. "Names without one use the marker selected below.")
     nameBox:SetPoint("RIGHT", targetBtn, "LEFT", -6, 0)
     nameBox:SetScript("OnEnterPressed", function(self)
         self:ClearFocus()
@@ -138,7 +142,7 @@ local function Build()
     end)
 
     -- Marker tiles -------------------------------------------------------------
-    local markCap = S.Caption(frame, "Marker")
+    local markCap = S.Caption(frame, "Default marker")
     markCap:SetPoint("TOPLEFT", PAD, Row(14))
 
     local tileSize, gap = 32, 5

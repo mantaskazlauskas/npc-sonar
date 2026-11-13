@@ -30,6 +30,28 @@ local DEFAULTS = {
 
 ns.ICON_NAMES = { "Star", "Circle", "Diamond", "Triangle", "Moon", "Square", "Cross", "Skull" }
 
+-- Name tags that pick a marker per name, as in chat: "Grimtooth {skull}".
+local ICON_TAGS = {
+    star = 1, circle = 2, coin = 2, diamond = 3, triangle = 4,
+    moon = 5, square = 6, cross = 7, x = 7, skull = 8,
+}
+for i = 1, 8 do
+    ICON_TAGS["rt" .. i] = i
+    ICON_TAGS[tostring(i)] = i
+end
+
+-- Ping ring colour for each marker, used for names that carry a tag.
+local ICON_COLORS = {
+    { 1.00, 0.92, 0.30 },  -- star
+    { 1.00, 0.55, 0.15 },  -- circle
+    { 0.80, 0.35, 1.00 },  -- diamond
+    { 0.35, 0.95, 0.35 },  -- triangle
+    { 0.75, 0.85, 1.00 },  -- moon
+    { 0.20, 0.35, 1.00 },  -- square (deeper than the default sonar blue)
+    { 1.00, 0.25, 0.20 },  -- cross
+    { 0.95, 0.95, 0.95 },  -- skull
+}
+
 -- Alert sounds, as SOUNDKIT keys. Which keys exist differs between retail and
 -- the Classic clients, so the list the window offers is filtered at runtime
 -- and a saved key the client lacks falls back to the default.
@@ -90,6 +112,7 @@ end
 
 ns.scanning = false
 local wanted = {}
+local wantedIcon = {}    -- wanted entry -> marker from its {tag}; absent = the default marker
 local ticker
 local alerted = {}       -- GUID -> wanted entry it matched, for NPCs announced this scan
 local lastAlertAt = -math.huge
@@ -118,20 +141,41 @@ function ns.ToggleMinimapButton() end
 
 ns.found = false  -- a match is in range right now; drives the badge colour
 
+-- Returns the wanted names (lowercase, tags removed, no duplicates) and a
+-- table of name -> marker for the names that carry a {tag}. An unknown tag
+-- is left in the name, which then simply never matches.
 local function ParseNames(text)
-    local list, seen = {}, {}
+    local list, icons = {}, {}
     for part in (text or ""):gmatch("[^,;]+") do
+        local icon
+        part = part:gsub("{(%w+)}", function(tag)
+            local i = ICON_TAGS[tag:lower()]
+            if not i then return nil end  -- keep the text as typed
+            icon = i
+            return ""
+        end)
         part = strtrim(part):lower()
-        if part ~= "" and not seen[part] then
-            seen[part] = true
-            list[#list + 1] = part
+        if part ~= "" then
+            if not tContains(list, part) then list[#list + 1] = part end
+            -- A repeat may carry the tag the first copy lacked.
+            icons[part] = icons[part] or icon
         end
     end
-    return list
+    return list, icons
 end
 
 function ns.WantedNames()
     return wanted
+end
+
+-- The marker for a wanted entry: its own tag, else the chosen default.
+function ns.IconFor(want)
+    return wantedIcon[want] or ns.db.icon
+end
+
+-- True when any name carries its own marker.
+function ns.HasNameIcons()
+    return next(wantedIcon) ~= nil
 end
 
 -- The wanted entry a display name matches, or nil.
@@ -235,7 +279,10 @@ local function StartPings(o)
     end
 end
 
-local function ShowOverlay(unit)
+-- `want` is the wanted entry the unit matched: it picks the marker, and a
+-- name with its own {tag} gets rings in that marker's colour so several
+-- matches stay apart. Untagged names keep the sonar blue.
+local function ShowOverlay(unit, want)
     local ok, plate = pcall(C_NamePlate.GetNamePlateForUnit, unit)
     if not ok or not plate then return end
 
@@ -256,7 +303,11 @@ local function ShowOverlay(unit)
         end
         overlays[plate] = o
     end
-    o.tex:SetTexture(ns.IconPath(ns.db.icon))
+    o.tex:SetTexture(ns.IconPath(ns.IconFor(want)))
+    local color = ICON_COLORS[wantedIcon[want]] or PING_COLOR
+    for _, ag in ipairs(o.pings) do
+        ag:GetParent():SetVertexColor(color[1], color[2], color[3])
+    end
     o:Show()
     -- The first ring is played at once on every start, so if it isn't
     -- playing the set was never started or has been stopped.
@@ -281,7 +332,7 @@ local function Alert(unit, name, want)
     if guid then alerted[guid] = want end
     lastAlertAt = now
 
-    local msg = ("Found %s %s"):format(ns.IconString(ns.db.icon), name)
+    local msg = ("Found %s %s"):format(ns.IconString(ns.IconFor(want)), name)
     ns.Print(msg)
     if RaidNotice_AddMessage and RaidWarningFrame then
         RaidNotice_AddMessage(RaidWarningFrame, msg, ChatTypeInfo["RAID_WARNING"])
@@ -310,6 +361,7 @@ local function CheckDeath(unit)
         if w == want then table.remove(wanted, i); removed = true; break end
     end
     if not removed then return false end
+    wantedIcon[want] = nil
     local name = Clean(UnitName(unit))
     name = type(name) == "string" and name or want
     if #wanted == 0 then
@@ -324,14 +376,14 @@ end
 
 local function Scan()
     if not ns.scanning then return end
-    local firstName, sawHidden
+    local firstName, firstWant, sawHidden
 
     for _, unit in ipairs(UNITS) do
         if ns.db.doneOnDeath and next(alerted) and CheckDeath(unit) then return end
         local name, want = Match(unit)
         if name then
-            firstName = firstName or name
-            if PLATE_UNITS[unit] then ShowOverlay(unit) end
+            if not firstName then firstName, firstWant = name, want end
+            if PLATE_UNITS[unit] then ShowOverlay(unit, want) end
             Alert(unit, name, want)
         elseif want then
             sawHidden = true
@@ -347,7 +399,7 @@ local function Scan()
 
     if firstName then
         ns.SetStatus(("|cff00ff00Found:|r %s %s\nClick the |cffffd100sonar badge|r (or your keybind) to target it and set a raid marker.")
-            :format(ns.IconString(ns.db.icon), firstName))
+            :format(ns.IconString(ns.IconFor(firstWant)), firstName))
     elseif sawHidden then
         -- The secure macro runs in Blizzard code, which can still read names,
         -- so the button keeps working where the scan has gone blind.
@@ -410,7 +462,7 @@ end
 
 function ns.Start(text)
     if text then ns.db.names = text end
-    wanted = ParseNames(ns.db.names)
+    wanted, wantedIcon = ParseNames(ns.db.names)
     if #wanted == 0 then
         ns.Print("Enter an NPC name first.")
         ns.SetStatus("Enter an NPC name first.")
