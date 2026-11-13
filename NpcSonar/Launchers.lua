@@ -43,7 +43,7 @@ local function ShowTooltip(owner, anchor)
     GameTooltip:SetOwner(owner, anchor or "ANCHOR_LEFT")
     GameTooltip:SetText("NPC Sonar")
     if ns.scanning then
-        GameTooltip:AddLine("Scanning for: " .. (ns.db.names or ""), 0.32, 0.85, 0.48, true)
+        GameTooltip:AddLine("Scanning for: " .. ns.NamesText(), 0.32, 0.85, 0.48, true)
     else
         GameTooltip:AddLine("Idle", 0.55, 0.57, 0.63)
     end

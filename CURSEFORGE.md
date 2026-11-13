@@ -4,9 +4,9 @@
 
 ## What it does
 
-- **Finds NPCs by name.** Enter one name or several, separated by commas. Turn on partial matching and `ashar` will find "Shade of Ashar". Or target the NPC once and click **Target** to copy its name.
+- **Finds NPCs by name.** Enter a name, and click **+ Add NPC** for each extra one (up to 8). Turn on partial matching and `ashar` will find "Shade of Ashar". Or target the NPC once and click **Target** to add its name.
 - **Marks them on your screen.** Every matching NPC gets your chosen raid icon (skull, cross, moon and so on) floating over its nameplate, with sonar rings pinging out behind it. Only you see it, and it updates live as mobs come and go.
-- **A marker per name.** Add a marker after a name, as in chat: `Grimtooth {skull}, Shade of Ashar {star}`. Each name then gets its own icon, ring colour and raid marker.
+- **A marker and sound per NPC.** Every NPC row has its own marker and alert sound button, so the skull rare and the star rare look and sound different, with matching ring colours and raid markers. Leave them on Default to use the shared choice.
 - **Spots rares from far away.** Rares and other special NPCs show on your minimap long before they get a nameplate. When one matches, you're alerted, an arrow on screen points at it with the distance and a small model of the NPC with its name and level, and a map waypoint is dropped on it. Made for Retail; on Classic it works only where the game shows such icons on the minimap.
 - **Alerts you.** When a match appears, you get a chat message, an on-screen raid-warning message, a sound and a flashing taskbar icon if the game is in the background, once per NPC per scan. Pick the sound from the game's own alert sounds, or turn it off.
 - **Targets and marks in one click.** While scanning, a small sonar badge sits on your screen. Its sweep turns while it searches. When your NPC is in range, the sweep stops, an orange contact lights up and the border turns green. Click it to target the NPC and place a real raid marker that your group can see. On clients with the ping system (Retail), it also pings it. You can bind it to a key.
@@ -14,13 +14,13 @@
 - **Knows when you're done.** Once a found NPC dies, its name is dropped from the scan, and the scan stops when every name is done. Turn this off to keep finding more mobs with the same name. Corpses never trigger alerts.
 
 The screen-edge, radar, waypoint and stop-when-dead behaviours are all options in the window, on by default.
-- **Saved lists.** Save a set of names ("Daily rares", "Profession trainers") and load it again with one click.
+- **Saved lists.** Save a set of NPCs with their markers and sounds ("Daily rares", "Profession trainers") and load it again with one click.
 - **Remembers sightings.** NPC Sonar keeps where and when each name was last seen. Put a waypoint on the latest one, share it with your group or guild, or print the log.
 
 ## How to use
 
 1. Type `/npcsonar` to open the window.
-2. Enter the NPC's name, pick a marker and press **Start scan**. If you change the name later, press **Restart scan** to search for the new one.
+2. Enter the NPC's name (and **+ Add NPC** for more), pick markers and sounds if you like, and press **Start scan**. If you change the names later, press **Restart scan** to search for the new ones.
 3. Keep moving. When the badge turns green, click it, or press your keybind.
 
 ## Commands

@@ -12,15 +12,21 @@ alerts you. It's meant for quests where the mob you need patrols.
 - `/npcsonar <name>` starts scanning for that name. Separate several names with commas.
 - `/npcsonar stop` and `/npcsonar start` stop and resume.
 - `/npcsonar minimap` hides or shows the minimap button.
-- **Target** copies your current target's name into the box.
-- **Per-name markers:** add a marker after a name, as in chat:
-  `Grimtooth {skull}, Shade of Ashar {star}` (also `{rt1}`–`{rt8}`). Untagged
-  names use the **Default marker** tiles. Tagged names' ping rings and radar
-  arrow take the marker's colour.
-- **Saved lists:** the `< name >` row under the name box loads saved lists;
-  **Save** keeps the current names under a name and **Del** deletes the list
-  shown (after asking). Also `/npcsonar save|load|delete <list>` and
-  `/npcsonar lists`. Loading over unsaved names prints them to chat first.
+- **NPC rows:** each NPC has its own row. **+ Add NPC** adds one (up to 8) and
+  **x** removes it. **Target** puts your current target's name in the first
+  empty row.
+- **Marker and sound per NPC:** each row has a marker button and a sound
+  button that open a small menu. **Default** follows the **Default marker**
+  tiles and **Default sound** below. NPCs with their own marker get ping rings
+  and a radar arrow in that marker's colour. A marker can also be typed after a
+  name, as in chat: `Grimtooth {skull}` (also `{rt1}`–`{rt8}`), which is how
+  `/npcsonar Grimtooth {skull}, Shade of Ashar` sets them. Changing a marker or
+  sound applies to a running scan at once; changed names need **Restart scan**.
+- **Saved lists:** the `< name >` row at the top loads saved lists, NPC rows
+  with their markers and sounds. **Save** keeps the current rows under a name
+  and **Del** deletes the list shown (after asking). Also
+  `/npcsonar save|load|delete <list>` and `/npcsonar lists`. Loading over
+  unsaved names prints them to chat first.
 - **Partial name match** matches any NPC whose name contains the text, so `ashar` finds "Shade of Ashar".
 - **Keep target's nameplate on screen:** while scanning, holds your target's
   plate at the screen edge when it's off screen (Retail:
@@ -43,7 +49,7 @@ alerts you. It's meant for quests where the mob you need patrols.
 - **Sightings:** where and when each name was last seen is kept between
   sessions. **Waypoint**, **Share** (group chat, or guild when solo) and
   **Log** act on them; also `/npcsonar waypoint|share|log`.
-- **Alert sound** picks that sound. Use the arrows to step through the game's alert sounds (each one plays as you pick it), click the name to hear it again, or choose **None**. Only sounds your client has are listed.
+- **Default sound** picks the sound for NPCs whose sound is Default. Use the arrows to step through the game's alert sounds (each one plays as you pick it), click the name to hear it again, or choose **None**. Only sounds your client has are listed.
 
 ## Marking
 

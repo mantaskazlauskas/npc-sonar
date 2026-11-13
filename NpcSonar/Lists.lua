@@ -1,13 +1,14 @@
 --------------------------------------------------------------------------------
 -- NPC Sonar -- saved search lists
 --
--- A list is a name and the text of the names box ("Daily rares" ->
--- "Grimtooth {skull}, Shade of Ashar"). They live in NpcSonarDB.lists, keyed
--- by name; NpcSonarDB.currentList is the one last saved or loaded, which the
--- window shows and Save offers as the default name.
+-- A list is a name and a copy of the window's NPC rows, each with its own
+-- marker and sound ("Daily rares" -> Grimtooth/skull, Shade of Ashar). They
+-- live in NpcSonarDB.lists, keyed by name; NpcSonarDB.currentList is the one
+-- last saved or loaded, which the window shows and Save offers as the
+-- default name.
 --
---   /npcsonar save <name>     save the current names under <name>
---   /npcsonar load <name>     put a list's names in the box (restarts a scan)
+--   /npcsonar save <name>     save the current rows under <name>
+--   /npcsonar load <name>     put a list's rows in the window (restarts a scan)
 --   /npcsonar delete <name>   forget a list
 --   /npcsonar lists           print them
 --------------------------------------------------------------------------------
@@ -42,14 +43,14 @@ function ns.SaveList(name)
         ns.Print("Give the list a name.")
         return
     end
-    if strtrim(ns.db.names or "") == "" then
+    if ns.NamesText() == "" then
         ns.Print("Enter some NPC names first.")
         return
     end
     -- Saving under an existing name (in any case) replaces that list.
     local old = Find(name)
     if old then Lists()[old] = nil end
-    Lists()[name] = ns.db.names
+    Lists()[name] = ns.CopyRows(ns.db.npcs)
     ns.db.currentList = name
     ns.Print(("Saved list %q."):format(name))
     ns.Refresh()
@@ -63,18 +64,26 @@ function ns.LoadList(name)
     end
     -- Names typed but never saved would be lost; print them so they can be
     -- copied back from chat.
-    local typed = strtrim(ns.db.names or "")
-    local current = ns.db.currentList and Lists()[ns.db.currentList]
-    if typed ~= "" and ns.db.names ~= current then
+    local typed = ns.NamesText()
+    if typed ~= "" and not ns.ShownList() then
         ns.Print("Replaced unsaved names: " .. typed)
     end
-    ns.db.names = Lists()[stored]
+    ns.db.npcs = ns.CopyRows(Lists()[stored])
     ns.db.currentList = stored
     if ns.scanning then
         ns.Start()  -- pick up the new names at once
     else
         ns.Refresh()
     end
+end
+
+-- The list the window holds unchanged, or nil. Once a row is edited the
+-- window no longer holds "that list".
+function ns.ShownList()
+    local current = ns.db.currentList
+    local list = current and Lists()[current]
+    if list and ns.RowsKey(list) == ns.RowsKey(ns.db.npcs) then return current end
+    return nil
 end
 
 function ns.DeleteList(name)
@@ -96,7 +105,7 @@ function ns.PrintLists()
         return
     end
     for _, name in ipairs(names) do
-        ns.Print(("|cffffd100%s|r: %s"):format(name, Lists()[name]))
+        ns.Print(("|cffffd100%s|r: %s"):format(name, ns.NamesText(Lists()[name])))
     end
 end
 
@@ -174,7 +183,7 @@ function ns.ConfirmDeleteList(name)
 end
 
 function ns.PromptSaveList()
-    if strtrim(ns.db.names or "") == "" then
+    if ns.NamesText() == "" then
         ns.Print("Enter some NPC names first.")
         return
     end

@@ -278,7 +278,8 @@ function ns.RadarScan()
             -- it is tried again on the next RadarTick.
             if not announced[guid] and ns.Announce(("Detected %s %s on the minimap. %s")
                     :format(ns.IconString(ns.IconFor(want)), name,
-                        east and "Follow the arrow." or "No direction available here.")) then
+                        east and "Follow the arrow." or "No direction available here."),
+                    ns.SoundFor(want)) then
                 announced[guid] = true
                 ns.RecordSighting(name, want, guid)
             end

@@ -20,7 +20,6 @@
 local ADDON, ns = ...
 
 local DEFAULTS = {
-    names   = "",
     icon    = 8,      -- skull
     partial = false,  -- substring match instead of whole-name match
     pinTarget = true, -- while scanning, hold the target's plate at the screen edge (Pin.lua)
@@ -149,36 +148,119 @@ function ns.ToggleMinimapButton() end
 
 ns.found = false  -- a match is in range right now; drives the badge colour
 
--- Returns the wanted names (lowercase, tags removed, no duplicates) and a
--- table of name -> marker for the names that carry a {tag}. An unknown tag
--- is left in the name, which then simply never matches.
-local function ParseNames(text)
-    local list, icons = {}, {}
+--------------------------------------------------------------------------------
+-- What to look for. NpcSonarDB.npcs is a list of rows, one per NPC, as the
+-- window shows them: { name = "Grimtooth", icon = 8, sound = "READY_CHECK" }.
+-- icon and sound are optional; without them the row uses the default marker
+-- and sound. A {tag} typed in a name ("Grimtooth {skull}", as in chat) also
+-- picks the marker, so typed lists and /npcsonar keep working.
+--
+-- Rows are read into `wanted` when a scan starts: lowercase names, tags
+-- removed, no duplicates, with each name's marker and sound alongside.
+
+-- A typed name without its {tag}, and the marker the tag picked. An unknown
+-- tag is left in the name, which then simply never matches.
+local function ParsePart(text)
+    local icon
+    text = (text or ""):gsub("{(%w+)}", function(tag)
+        local i = ICON_TAGS[tag:lower()]
+        if not i then return nil end  -- keep the text as typed
+        icon = i
+        return ""
+    end)
+    return strtrim(text), icon
+end
+
+-- The window has room for this many rows, so text is cut to it too.
+ns.MAX_NPCS = 8
+
+-- Rows from comma-separated text ("Grimtooth {skull}, Shade of Ashar"), at
+-- most MAX_NPCS of them. Names past that are printed rather than kept in rows
+-- the window couldn't show.
+function ns.ParseRows(text)
+    local rows, dropped = {}, {}
     for part in (text or ""):gmatch("[^,;]+") do
-        local icon
-        part = part:gsub("{(%w+)}", function(tag)
-            local i = ICON_TAGS[tag:lower()]
-            if not i then return nil end  -- keep the text as typed
-            icon = i
-            return ""
-        end)
-        part = strtrim(part):lower()
-        if part ~= "" then
-            if not tContains(list, part) then list[#list + 1] = part end
-            -- A repeat may carry the tag the first copy lacked.
-            icons[part] = icons[part] or icon
+        local name, icon = ParsePart(part)
+        if name ~= "" then
+            if #rows < ns.MAX_NPCS then
+                rows[#rows + 1] = { name = name, icon = icon }
+            else
+                dropped[#dropped + 1] = name
+            end
         end
     end
-    return list, icons
+    if #dropped > 0 then
+        ns.Print(("Up to %d NPCs at a time; left out: %s"):format(ns.MAX_NPCS, table.concat(dropped, ", ")))
+    end
+    return rows
+end
+
+function ns.CopyRows(rows)
+    local copy = {}
+    for i, r in ipairs(rows or {}) do
+        copy[i] = { name = r.name, icon = r.icon, sound = r.sound }
+    end
+    return copy
+end
+
+-- The rows that name something.
+local function FilledRows(rows)
+    local out = {}
+    for _, r in ipairs(rows or {}) do
+        if strtrim(r.name or "") ~= "" then out[#out + 1] = r end
+    end
+    return out
+end
+
+-- "Grimtooth, Shade of Ashar", for tooltips and chat.
+function ns.NamesText(rows)
+    local names = {}
+    for _, r in ipairs(FilledRows(rows or ns.db.npcs)) do
+        names[#names + 1] = (ParsePart(r.name))
+    end
+    return table.concat(names, ", ")
+end
+
+-- A string that is equal for two row lists exactly when they look for the
+-- same names with the same markers and sounds; used to tell whether the
+-- window still holds a saved list unchanged.
+function ns.RowsKey(rows)
+    local parts = {}
+    for _, r in ipairs(FilledRows(rows)) do
+        parts[#parts + 1] = ("%s|%s|%s"):format(strtrim(r.name):lower(), r.icon or "", r.sound or "")
+    end
+    return table.concat(parts, ";")
+end
+
+-- Fills wanted, wantedIcon and wantedSound from the rows. A repeat of a name
+-- may carry the marker or sound the first copy lacked.
+local wantedSound = {}
+local function ReadRows(rows)
+    local list, icons, sounds = {}, {}, {}
+    for _, r in ipairs(rows or {}) do
+        local name, tagIcon = ParsePart(r.name)
+        name = name:lower()
+        if name ~= "" then
+            if not tContains(list, name) then list[#list + 1] = name end
+            icons[name] = icons[name] or r.icon or tagIcon
+            sounds[name] = sounds[name] or r.sound
+        end
+    end
+    return list, icons, sounds
 end
 
 function ns.WantedNames()
     return wanted
 end
 
--- The marker for a wanted entry: its own tag, else the chosen default.
+-- The marker for a wanted entry: its own, else the chosen default.
 function ns.IconFor(want)
     return wantedIcon[want] or ns.db.icon
+end
+
+-- The alert sound for a wanted entry: its own, else the chosen default.
+function ns.SoundFor(want)
+    return wantedSound[want] or ns.db.sound
 end
 
 -- True when any name carries its own marker.
@@ -339,10 +421,11 @@ end
 
 --------------------------------------------------------------------------------
 
--- Prints msg, shows it as a raid warning, plays the alert sound and flashes
--- the taskbar. Returns false without doing anything inside the cooldown, so
--- a pack of matches is one alert. Shared with the radar.
-function ns.Announce(msg)
+-- Prints msg, shows it as a raid warning, plays `sound` (a SOUNDKIT key, or
+-- the default) and flashes the taskbar. Returns false without doing anything
+-- inside the cooldown, so a pack of matches is one alert. Shared with the
+-- radar.
+function ns.Announce(msg, sound)
     local now = GetTime()
     if now - lastAlertAt < ALERT_COOLDOWN then return false end
     lastAlertAt = now
@@ -351,7 +434,7 @@ function ns.Announce(msg)
     if RaidNotice_AddMessage and RaidWarningFrame then
         RaidNotice_AddMessage(RaidWarningFrame, msg, ChatTypeInfo["RAID_WARNING"])
     end
-    ns.PlayAlertSound()
+    ns.PlayAlertSound(sound)
     -- Flashes the taskbar entry; the client does nothing when the game
     -- window already has focus.
     if FlashClientIcon then FlashClientIcon() end
@@ -361,14 +444,17 @@ end
 local function Alert(unit, name, want)
     local guid = Clean(UnitGUID(unit))
     if guid and alerted[guid] then return end
-    if not ns.Announce(("Found %s %s"):format(ns.IconString(ns.IconFor(want)), name)) then return end
+    if not ns.Announce(("Found %s %s"):format(ns.IconString(ns.IconFor(want)), name),
+            ns.SoundFor(want)) then
+        return
+    end
     if guid then alerted[guid] = want end
     ns.RecordSighting(name, want, nil)
 end
 
 -- An NPC we announced is now dead (you usually still have it targeted, or
 -- its corpse is under the mouse). Its name is done: drop it from this scan,
--- and stop when nothing is left. ns.db.names is untouched, so the next Start
+-- and stop when nothing is left. ns.db.npcs is untouched, so the next Start
 -- looks for everything again.
 local function CheckDeath(unit)
     local guid = Clean(UnitGUID(unit))
@@ -385,6 +471,7 @@ local function CheckDeath(unit)
     end
     if not removed then return false end
     wantedIcon[want] = nil
+    wantedSound[want] = nil
     local name = Clean(UnitName(unit))
     name = type(name) == "string" and name or want
     if #wanted == 0 then
@@ -486,9 +573,11 @@ end
 
 --------------------------------------------------------------------------------
 
+-- `text` (from /npcsonar <names>) replaces the rows; without it the rows in
+-- the window are used.
 function ns.Start(text)
-    if text then ns.db.names = text end
-    wanted, wantedIcon = ParseNames(ns.db.names)
+    if text then ns.db.npcs = ns.ParseRows(text) end
+    wanted, wantedIcon, wantedSound = ReadRows(ns.db.npcs)
     if #wanted == 0 then
         ns.Print("Enter an NPC name first.")
         ns.SetStatus("Enter an NPC name first.")
@@ -531,6 +620,44 @@ function ns.Rescan()
     ns.UpdateMarkButton()
 end
 
+-- Called when a row's marker or sound changes in the window. A running scan
+-- takes the new choice at once; the names it looks for stay as they were
+-- until the next Start (so names already found dead stay dropped).
+function ns.RowsChanged()
+    if not ns.scanning then return end
+    local _, icons, sounds = ReadRows(ns.db.npcs)
+    wipe(wantedIcon)
+    wipe(wantedSound)
+    for _, want in ipairs(wanted) do
+        wantedIcon[want] = icons[want]
+        wantedSound[want] = sounds[want]
+    end
+    ns.Rescan()
+end
+
+-- A sound key saved on a client that has it, loaded on one that doesn't.
+local function KnownSound(key)
+    return key == nil or key == "NONE" or (SOUNDKIT and SOUNDKIT[key]) ~= nil
+end
+
+-- 0.2.0 kept the names as one comma-separated text (NpcSonarDB.names), and
+-- saved lists as such texts. Both become rows; sounds the client lacks fall
+-- back to the default.
+local function MigrateRows(db)
+    if db.npcs == nil then db.npcs = ns.ParseRows(db.names) end
+    db.names = nil
+    for name, list in pairs(db.lists or {}) do
+        if type(list) == "string" then db.lists[name] = ns.ParseRows(list) end
+    end
+    local function Check(rows)
+        for _, r in ipairs(rows) do
+            if not KnownSound(r.sound) then r.sound = nil end
+        end
+    end
+    Check(db.npcs)
+    for _, list in pairs(db.lists or {}) do Check(list) end
+end
+
 --------------------------------------------------------------------------------
 
 local events = CreateFrame("Frame")
@@ -549,6 +676,7 @@ events:SetScript("OnEvent", function(self, event, arg1)
         for k, v in pairs(DEFAULTS) do
             if NpcSonarDB[k] == nil then NpcSonarDB[k] = v end
         end
+        MigrateRows(NpcSonarDB)
         ns.db = NpcSonarDB
         self:UnregisterEvent("ADDON_LOADED")
         -- React the moment a candidate appears instead of waiting for a tick.
