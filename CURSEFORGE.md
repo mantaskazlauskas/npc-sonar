@@ -9,7 +9,7 @@
 - **A marker and sound per NPC.** Every NPC row has its own marker and alert sound button, so the skull rare and the star rare look and sound different, with matching ring colours and raid markers. Leave them on Default to use the shared choice.
 - **Spots rares from far away.** Rares and other special NPCs show on your minimap long before they get a nameplate. When one matches, you're alerted, an arrow on screen points at it with the distance and a small model of the NPC with its name and level, and a map waypoint is dropped on it. Made for Retail; on Classic it works only where the game shows such icons on the minimap.
 - **Alerts you.** When a match appears, you get a chat message, an on-screen raid-warning message, a sound and a flashing taskbar icon if the game is in the background, once per NPC per scan. Pick the sound from the game's own alert sounds, or turn it off.
-- **Targets and marks in one click.** While scanning, a small sonar badge sits on your screen. Its sweep turns while it searches. When your NPC is in range, the sweep stops, an orange contact lights up and the border turns green. Click it to target the NPC and place a real raid marker that your group can see. On clients with the ping system (Retail), it also pings it. You can bind it to a key.
+- **Targets and marks in one click.** A small sonar badge is always on your screen. Click it to start scanning; its sweep turns while it searches. When your NPC is in range, the sweep stops, an orange contact lights up and the border turns green. Click it to target the NPC and place a real raid marker that your group can see. On clients with the ping system (Retail), it also pings it. You can bind it to a key or controller button.
 - **Keeps your target in view.** While scanning, your target's nameplate stays at the edge of the screen when it's behind you or off to the side (on Classic clients, all nameplates do). Your own nameplate settings are put back when the scan stops.
 - **Knows when you're done.** Once a found NPC dies, its name is dropped from the scan, and the scan stops when every name is done. Turn this off to keep finding more mobs with the same name. Corpses never trigger alerts.
 
@@ -48,10 +48,10 @@ The screen-edge, radar, waypoint and stop-when-dead behaviours are all options i
 - **Waypoints:** a waypoint you placed yourself is never replaced automatically.
 - **Nameplates:** turn on **enemy nameplates** (press V). For friendly quest NPCs, turn on friendly NPC nameplates too.
 - **Raid groups:** placing a raid marker needs raid leader or assist. In a party or solo, anyone can mark.
-- **Instances (Midnight):** Blizzard hides NPC names from addons inside instances, so automatic detection can't work there. Clicking the badge still finds and marks the NPC.
+- **Instances (Midnight):** Blizzard hides NPC names from addons inside instances, so automatic detection can't work there. While scanning, clicking the badge still finds and marks the NPC.
 - **No automatic raid markers:** Blizzard only allows raid markers and pings from a click or keypress, so NPC Sonar marks automatically on your screen and leaves the real marker to your click.
 - **The click clears your target first:** if the NPC isn't nearby, clicking the badge just leaves you with no target.
-- **Combat:** Blizzard locks the badge during combat. If you start a scan or change the name or marker mid-fight, the badge appears or updates when combat ends.
+- **Combat:** Blizzard locks the badge during combat. If you start a scan or change the name or marker mid-fight, the badge updates when combat ends.
 
 ## Supported versions
 

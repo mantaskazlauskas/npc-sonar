@@ -1,12 +1,14 @@
 --------------------------------------------------------------------------------
 -- NPC Sonar -- the sonar badge
 --
--- One small badge that is on screen only while a scan runs. Its sonar scope
--- sweeps round while searching; when a match is in range the sweep stops, an
--- orange contact appears and the border turns green. It is also the button
--- that places the raid marker:
+-- One small badge that is always on screen, so new players find it. While
+-- idle it sits still and slightly dimmed; while a scan runs its sonar scope
+-- sweeps round; when a match is in range the sweep stops, an orange contact
+-- appears and the border turns green. It is also the button that places the
+-- raid marker:
 --
---   left-click / keybind   target the NPC and mark it
+--   left-click / keybind   idle: start the scan (or open the window if no
+--                          name is set); scanning: target the NPC and mark it
 --   right-click            open or close the window
 --   right-drag             move it
 --
@@ -39,7 +41,9 @@ local SCOPE_FOUND  = "Interface\\AddOns\\NpcSonar\\Media\\sonar_found"
 local SWEEP_SECONDS = 2.5   -- one full turn
 
 BINDING_HEADER_NPCSONAR = "NPC Sonar"
-_G["BINDING_NAME_CLICK NpcSonarMarkButton:LeftButton"] = "Target & mark the NPC"
+_G["BINDING_NAME_CLICK NpcSonarMarkButton:LeftButton"] = "Start scan / target & mark the NPC"
+
+local IDLE_ALPHA = 0.75
 
 local btn = CreateFrame("Button", "NpcSonarMarkButton", UIParent,
     "SecureActionButtonTemplate, BackdropTemplate")
@@ -73,15 +77,33 @@ turn:SetDuration(SWEEP_SECONDS)
 -- *type1, not type: the macro belongs to the left button only, so right-clicks
 -- stay free for opening the window. The * matches any modifier; a bare "type1"
 -- is skipped when one is held, which would break modified keybinds like SHIFT-Q.
-btn:SetAttribute("*type1", "macro")
+-- The attribute is only set while scanning (see Apply); while idle the left
+-- click does nothing secure, and the hook below starts the scan instead.
 -- Both edges registered with an explicit useOnKeyDown is how a secure button
 -- fires exactly once on current clients, whatever ActionButtonUseKeyDown says.
 btn:RegisterForClicks("LeftButtonUp", "LeftButtonDown", "RightButtonUp")
 btn:SetAttribute("useOnKeyDown", false)
--- A hook runs after the secure handler and only touches our own unprotected
--- window, so it is safe in combat.
-btn:HookScript("OnClick", function(_, button)
-    if button == "RightButton" then ns.ToggleWindow() end
+-- A hook runs after the secure handler and only touches our own code and
+-- unprotected window, so it is safe in combat. Starting a scan in combat
+-- works; the badge just takes on its macro once combat ends.
+-- Left clicks fire on both edges; only the up edge counts, as for the secure
+-- handler (useOnKeyDown false). Starting on the down edge would set the
+-- macro in time for the up edge to run it, clearing your target.
+-- If a scan stopped in combat, the badge still holds its macro until combat
+-- ends (see Apply), so that click marks and must not also restart a scan.
+local function HoldsMacro()
+    return btn:GetAttribute("*type1") ~= nil
+end
+
+btn:HookScript("OnClick", function(_, button, down)
+    if button == "RightButton" then
+        ns.ToggleWindow()
+    elseif down or ns.scanning or HoldsMacro() then
+        return
+    elseif not ns.Start() then
+        -- No name yet: open the window so there is somewhere to type one.
+        if not (NpcSonarFrame and NpcSonarFrame:IsShown()) then ns.ToggleWindow() end
+    end
 end)
 
 local dragging = false
@@ -106,16 +128,25 @@ end)
 
 btn:SetScript("OnEnter", function(self)
     self:SetBackdropColor(unpack(C.hover))
+    self:SetAlpha(1)  -- full strength under the mouse, even while idle
     GameTooltip:SetOwner(self, "ANCHOR_TOP")
-    GameTooltip:SetText(ns.found and "NPC Sonar: found" or "NPC Sonar: scanning")
-    GameTooltip:AddLine(ns.NamesText(), 1, 1, 1, true)
-    GameTooltip:AddLine("Left-click: target & mark it", 0.7, 0.7, 0.7)
+    if not ns.scanning then
+        GameTooltip:SetText("NPC Sonar: idle")
+        local names = ns.NamesText()
+        if names ~= "" then GameTooltip:AddLine(names, 1, 1, 1, true) end
+        GameTooltip:AddLine("Left-click: start scanning", 0.7, 0.7, 0.7)
+    else
+        GameTooltip:SetText(ns.found and "NPC Sonar: found" or "NPC Sonar: scanning")
+        GameTooltip:AddLine(ns.NamesText(), 1, 1, 1, true)
+        GameTooltip:AddLine("Left-click: target & mark it", 0.7, 0.7, 0.7)
+    end
     GameTooltip:AddLine("Right-click: open window. Right-drag: move.", 0.7, 0.7, 0.7)
     GameTooltip:AddLine("Bind a key under Key Bindings > AddOns.", 0.7, 0.7, 0.7)
     GameTooltip:Show()
 end)
 btn:SetScript("OnLeave", function(self)
     self:SetBackdropColor(unpack(C.bg))
+    self:SetAlpha((ns.scanning or HoldsMacro()) and 1 or IDLE_ALPHA)
     GameTooltip:Hide()
 end)
 
@@ -172,8 +203,12 @@ local function Apply()
             btn:SetPoint("CENTER", UIParent, "CENTER", 0, -150)
         end
     end
-    btn:SetAttribute("macrotext", BuildMacro())
-    btn:SetShown(ns.scanning)
+    -- While idle there is nothing to mark: no macro, and the click hook
+    -- starts the scan instead.
+    btn:SetAttribute("*type1", ns.scanning and "macro" or nil)
+    btn:SetAttribute("macrotext", ns.scanning and BuildMacro() or nil)
+    btn:Show()
+    ns.UpdateIndicator()  -- the dimming follows whether it still holds the macro
 end
 
 function ns.UpdateMarkButton()
@@ -193,6 +228,10 @@ end
 -- Cosmetic state: searching vs found. Safe in combat.
 
 function ns.UpdateIndicator()
+    -- Alpha is cosmetic, so it may change in combat. A badge still holding
+    -- its macro (scan stopped mid-combat) stays at full strength, since a
+    -- click would still mark.
+    btn:SetAlpha((ns.scanning or HoldsMacro()) and 1 or IDLE_ALPHA)
     if ns.scanning and ns.found then
         -- Stop() returns the scope to its unrotated pose, where the contact
         -- sits just behind the sweep line.
@@ -211,10 +250,15 @@ function ns.UpdateIndicator()
 end
 
 local events = CreateFrame("Frame")
+events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
 events:RegisterEvent("PLAYER_REGEN_DISABLED")
 events:SetScript("OnEvent", function(_, event)
-    if event == "PLAYER_REGEN_DISABLED" then
+    if event == "PLAYER_LOGIN" then
+        -- Saved settings exist by now; put the idle badge on screen.
+        ns.UpdateMarkButton()
+        ns.UpdateIndicator()
+    elseif event == "PLAYER_REGEN_DISABLED" then
         -- Last chance before lockdown to finish a drag on the secure frame.
         EndDrag()
     elseif pending then

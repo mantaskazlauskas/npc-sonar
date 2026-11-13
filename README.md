@@ -59,15 +59,16 @@ available to the Blizzard UI" popup. So marking works in two parts:
 
 1. **Nameplate icon (automatic, only you see it).** Every living match gets
    the chosen icon drawn above its nameplate.
-2. **The sonar badge (one click, everyone sees the marker).** While
-   scanning, a small sonar badge is on screen. Its sweep turns while
-   searching; when a match is in range the sweep stops, an orange contact
-   appears and the border turns green. The corner shows the
-   marker a click will place.
-   - **Left-click** targets the NPC and puts a real raid marker on it. On
-     clients that have the ping system (retail), it also sends an **attack**
-     ping on it. You can also bind this to a key under
-     *Key Bindings → AddOns → NPC Sonar*.
+2. **The sonar badge (one click, everyone sees the marker).** A small sonar
+   badge is always on screen. While idle it sits still and slightly dimmed;
+   while scanning its sweep turns; when a match is in range the sweep stops,
+   an orange contact appears and the border turns green. The corner shows
+   the marker a click will place.
+   - **Left-click** while idle starts the scan (or opens the window if no
+     name is set). While scanning it targets the NPC and puts a real raid
+     marker on it. On clients that have the ping system (retail), it also
+     sends an **attack** ping on it. You can bind this to a key or controller
+     button under *Key Bindings → AddOns → NPC Sonar*.
    - **Right-click** opens or closes the window.
    - **Right-drag** moves the badge.
 
@@ -78,8 +79,8 @@ available to the Blizzard UI" popup. So marking works in two parts:
    and a last pass leaves you targeting the first-listed name that's around.
 
 The badge is a secure button, so the game won't let it change during combat.
-If you start or stop a scan, or edit the name or marker mid-fight, it shows,
-hides or updates its macro when combat ends. Its colours still change in combat.
+If you start or stop a scan, or edit the name or marker mid-fight, it updates
+its macro when combat ends. Its colours and sweep still change in combat.
 
 ## How it finds NPCs
 
