@@ -25,9 +25,46 @@ local C = S.C
 
 local ARROW = "Interface\\AddOns\\NpcSonar\\Media\\radar_arrow"
 local UPDATE_INTERVAL = 0.05   -- arrow refresh while shown
+local MODEL_SIZE = 72
+local MODEL_SPIN = 0.6         -- radians per second, a slow turntable
 
 local announced = {}   -- vignette GUIDs announced this scan
-local tracked          -- { guid, name, want } for the vignette the arrow follows
+local tracked          -- { guid, name, want, npcID } for the vignette the arrow follows
+
+--------------------------------------------------------------------------------
+-- NPC details. A vignette carries the NPC's GUID, and with it the creature
+-- ID the model is drawn from, but not its level. The level is only readable
+-- from a unit (nameplate, target, mouseover), so it is remembered per
+-- creature in NpcSonarDB.npcInfo whenever a matching NPC is seen as one, and
+-- shown from then on, even from radar range on a later hunt. Until then the
+-- level reads "??".
+
+-- Creature ID from a GUID like "Creature-0-1234-0-56-12345-0000ABCDEF".
+local function NpcID(guid)
+    if type(guid) ~= "string" then return nil end
+    local kind, _, _, _, _, id = strsplit("-", guid)
+    if kind == "Creature" or kind == "Vehicle" then return tonumber(id) end
+    return nil
+end
+
+local CLASSIFICATION = {
+    rare = "Rare", rareelite = "Rare Elite", elite = "Elite",
+    worldboss = "Boss",
+}
+
+-- Most open-world rares on Retail scale to whoever looks at them, so a level
+-- equal to the viewer's is stored as "scaled" and shown as your current
+-- level; another character then sees its own level, not the one who saw it.
+local SCALES = WOW_PROJECT_ID == nil or WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+
+local function DetailText(npcID)
+    local info = npcID and ns.db.npcInfo and ns.db.npcInfo[npcID]
+    local level = info and (info.scaled and UnitLevel("player") or info.level)
+    local text = "Level " .. ((level and level > 0) and level or "??")
+    local class = info and CLASSIFICATION[info.class]
+    if class then text = text .. "  " .. class end
+    return text
+end
 
 --------------------------------------------------------------------------------
 -- Positions
@@ -80,8 +117,12 @@ end
 -- The arrow. A plain frame of our own on UIParent: never protected, so it can
 -- show, hide and move in combat. Left-drag moves it.
 
+-- Height of the arrow head and of the text block under it; the model's
+-- height is added only while it shows (see ShowModel).
+local HEAD_HEIGHT, TEXT_HEIGHT = 40, 40
+
 local arrow = CreateFrame("Frame", "NpcSonarRadarArrow", UIParent)
-arrow:SetSize(56, 76)
+arrow:SetSize(MODEL_SIZE, HEAD_HEIGHT + TEXT_HEIGHT)
 arrow:SetFrameStrata("MEDIUM")
 arrow:SetClampedToScreen(true)
 arrow:SetMovable(true)
@@ -94,11 +135,69 @@ head:SetSize(40, 40)
 head:SetPoint("TOP")
 head:SetTexture(ARROW)
 
+-- The NPC itself, small and slowly turning. Hidden for vignettes that
+-- aren't creatures (treasures, objects), and the text moves up into its place.
+local model = CreateFrame("PlayerModel", nil, arrow)
+model:SetSize(MODEL_SIZE, MODEL_SIZE)
+model:SetPoint("TOP", head, "BOTTOM", 0, 0)
+model:SetPortraitZoom(0)
+model:Hide()
+
 local label = S.Font(arrow, 11, C.text, "OUTLINE")
-label:SetPoint("TOP", head, "BOTTOM", 0, -2)
+
+local detail = S.Font(arrow, 10, C.accent, "OUTLINE")
+detail:SetPoint("TOP", label, "BOTTOM", 0, -1)
 
 local dist = S.Font(arrow, 10, C.muted, "OUTLINE")
-dist:SetPoint("TOP", label, "BOTTOM", 0, -1)
+
+local MAX_MODEL_TRIES = 5
+local modelID     -- creature currently in the model
+local modelTries = 0
+local layout      -- "creature" or "object", the layout last applied
+local spin = 0
+
+-- Lays out the frame for a creature (model, name, level, distance) or for
+-- anything else (name, distance), only when that changes. The frame's height
+-- follows, so it never leaves an empty area to drag or clamp by.
+local function Layout(kind)
+    if kind == layout then return end
+    layout = kind
+    label:ClearAllPoints()
+    dist:ClearAllPoints()
+    if kind == "creature" then
+        model:Show()
+        detail:Show()
+        label:SetPoint("TOP", model, "BOTTOM", 0, -2)
+        dist:SetPoint("TOP", detail, "BOTTOM", 0, -1)
+        arrow:SetHeight(HEAD_HEIGHT + MODEL_SIZE + TEXT_HEIGHT)
+    else
+        model:Hide()
+        detail:Hide()
+        label:SetPoint("TOP", head, "BOTTOM", 0, -2)
+        dist:SetPoint("TOP", label, "BOTTOM", 0, -1)
+        arrow:SetHeight(HEAD_HEIGHT + TEXT_HEIGHT)
+    end
+end
+
+-- Puts the tracked NPC in the model. Creature data the client hasn't cached
+-- yet loads in the background, so a model that came up empty is asked for
+-- again on later scans, a few times at most (some creatures have no model).
+local function ShowModel(npcID)
+    if not npcID then
+        if modelID then model:ClearModel() end
+        modelID = nil
+        Layout("object")
+        return
+    end
+    if npcID ~= modelID then
+        modelID, modelTries = npcID, 1
+        model:SetCreature(npcID)
+    elseif (model:GetModelFileID() or 0) == 0 and modelTries < MAX_MODEL_TRIES then
+        modelTries = modelTries + 1
+        model:SetCreature(npcID)
+    end
+    Layout("creature")
+end
 
 arrow:SetScript("OnDragStart", arrow.StartMoving)
 arrow:SetScript("OnDragStop", function(self)
@@ -118,7 +217,11 @@ local function PlaceArrow()
 end
 
 local elapsed = 0
-arrow:SetScript("OnUpdate", function(self, dt)
+arrow:SetScript("OnUpdate", function(_, dt)
+    if model:IsShown() then
+        spin = (spin + dt * MODEL_SPIN) % (2 * math.pi)
+        model:SetFacing(spin)
+    end
     elapsed = elapsed + dt
     if elapsed < UPDATE_INTERVAL then return end
     elapsed = 0
@@ -149,6 +252,8 @@ local function Track(best)
     local color = ns.ColorFor(best.want)
     head:SetVertexColor(color[1], color[2], color[3])
     label:SetText(ns.IconString(ns.IconFor(best.want)) .. " " .. best.name)
+    detail:SetText(DetailText(best.npcID))
+    ShowModel(best.npcID)
     if not arrow:IsShown() then
         PlaceArrow()
         arrow:Show()
@@ -179,7 +284,10 @@ function ns.RadarScan()
             end
             local d = east and (east * east + south * south)
             if d and (not best or d < bestDist) then
-                best, bestDist = { guid = guid, name = name, want = want }, d
+                best, bestDist = {
+                    guid = guid, name = name, want = want,
+                    npcID = NpcID(ns.Clean(info.objectGUID)),
+                }, d
             end
         end
     end
@@ -204,6 +312,23 @@ function ns.RadarStatus()
     return ("|cff40b3f2Detected:|r %s %s%s\nFollow the arrow until it is in nameplate range.")
         :format(ns.IconString(ns.IconFor(tracked.want)), tracked.name,
             (text and text ~= "") and (" (" .. text .. ")") or "")
+end
+
+-- Called by Core for every unit that matches a wanted name: remembers the
+-- creature's level and classification for the radar's detail line.
+function ns.NoteUnit(unit)
+    local id = NpcID(ns.Clean(UnitGUID(unit)))
+    local level = ns.Clean(UnitLevel(unit))
+    if not id or type(level) ~= "number" then return end
+    local class = ns.Clean(UnitClassification(unit))
+    class = type(class) == "string" and class or nil
+    ns.db.npcInfo = ns.db.npcInfo or {}
+    local old = ns.db.npcInfo[id]
+    local scaled = SCALES and level == UnitLevel("player") or nil
+    -- The scan sees a matching unit every 0.3 s; only write on a change.
+    if old and old.level == level and old.class == class and old.scaled == scaled then return end
+    ns.db.npcInfo[id] = { level = level, class = class, scaled = scaled }
+    if tracked and tracked.npcID == id then detail:SetText(DetailText(id)) end
 end
 
 function ns.ResetRadar()

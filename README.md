@@ -33,7 +33,9 @@ alerts you. It's meant for quests where the mob you need patrols.
   message, a sound, and a taskbar flash if the game isn't focused.
 - **Radar (Track rares on the minimap with an arrow):** matching minimap
   vignettes (rares, special NPCs) are announced from far away, and a draggable
-  arrow points at the nearest one with its distance. With **Set a map waypoint
+  arrow points at the nearest one with its distance, a small turning model of
+  the NPC and its level (known once you've seen that NPC up close; `??` until
+  then, and on Retail scaled rares show your level). With **Set a map waypoint
   on rares it finds**, a waypoint is dropped on it too, unless you have placed
   your own. Inside instances there are no positions, so it can only alert,
   with no arrow or waypoint. Classic clients without minimap vignettes get

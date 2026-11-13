@@ -141,6 +141,7 @@ function ns.UpdateIndicator() end
 function ns.SetupLaunchers() end
 function ns.RadarScan() end
 function ns.RadarTick() end
+function ns.NoteUnit(_unit) end
 function ns.ResetRadar() end
 function ns.RadarStatus() return nil end
 function ns.RecordSighting(_name, _want, _guid) end
@@ -407,6 +408,7 @@ local function Scan()
         if name then
             if not firstName then firstName, firstWant = name, want end
             if PLATE_UNITS[unit] then ShowOverlay(unit, want) end
+            ns.NoteUnit(unit)
             Alert(unit, name, want)
         elseif want then
             sawHidden = true
