@@ -275,6 +275,9 @@ local function Alert(unit, name)
         RaidNotice_AddMessage(RaidWarningFrame, msg, ChatTypeInfo["RAID_WARNING"])
     end
     ns.PlayAlertSound()
+    -- Flashes the taskbar entry; the client does nothing when the game
+    -- window already has focus.
+    if FlashClientIcon then FlashClientIcon() end
 end
 
 local function Scan()
