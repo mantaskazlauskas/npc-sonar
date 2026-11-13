@@ -12,7 +12,7 @@
 -- height follows.
 --------------------------------------------------------------------------------
 
-local _, ns = ...
+local ADDON, ns = ...
 local S = ns.Style
 local C = S.C
 
@@ -350,9 +350,16 @@ local function Build()
     title:SetPoint("LEFT", logo, "RIGHT", 8, 0)
     title:SetText("NPC Sonar")
 
+    -- The version from the .toc, small and muted after the title.
+    local getMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+    local version = getMeta and getMeta(ADDON, "Version")
+    local versionText = S.Font(header, 10, C.muted)
+    versionText:SetPoint("BOTTOMLEFT", title, "BOTTOMRIGHT", 5, 1)
+    versionText:SetText(version and ("v" .. version) or "")
+
     stateDot = header:CreateTexture(nil, "ARTWORK")
     stateDot:SetSize(6, 6)
-    stateDot:SetPoint("LEFT", title, "RIGHT", 10, 0)
+    stateDot:SetPoint("LEFT", title, "RIGHT", 10 + versionText:GetStringWidth() + 5, 0)
     stateDot:SetColorTexture(1, 1, 1, 1)
 
     stateText = S.Font(header, 10, C.muted)
