@@ -46,7 +46,7 @@ The screen-edge, radar, waypoint and stop-when-dead behaviours are all options i
 
 - **Range:** NPC Sonar finds NPCs once they're within nameplate range (roughly 40–60 yards) or under your mouse. Rares and other NPCs with a minimap icon are found from much further away. It doesn't search the whole zone.
 - **Waypoints:** a waypoint you placed yourself is never replaced automatically.
-- **Nameplates:** turn on **enemy nameplates** (press V). For friendly quest NPCs, turn on friendly NPC nameplates too.
+- **Nameplates:** turn on **enemy nameplates** (press V). Friendly NPC nameplates are off by default in WoW, so NPC Sonar turns them on while it scans (an option in the window) and puts your setting back afterwards.
 - **Raid groups:** placing a raid marker needs raid leader or assist. In a party or solo, anyone can mark.
 - **Instances (Midnight):** Blizzard hides NPC names from addons inside instances, so automatic detection can't work there. While scanning, clicking the badge still finds and marks the NPC.
 - **No automatic raid markers:** Blizzard only allows raid markers and pings from a click or keypress, so NPC Sonar marks automatically on your screen and leaves the real marker to your click.

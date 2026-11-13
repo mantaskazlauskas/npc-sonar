@@ -67,14 +67,16 @@ available to the Blizzard UI" popup. So marking works in two parts:
    - **Left-click** while idle starts the scan (or opens the window if no
      name is set). While scanning it targets the NPC and puts a real raid
      marker on it. On clients that have the ping system (retail), it also
-     sends an **attack** ping on it. You can bind this to a key or controller
+     pings it: **attack** on enemies, **assist** on friendly NPCs and
+     **warning** on anything else. You can bind this to a key or controller
      button under *Key Bindings → AddOns → NPC Sonar*.
    - **Right-click** opens or closes the window.
    - **Right-drag** moves the badge.
 
    The click runs this macro: `/cleartarget`, `/targetexact <name>` for each
    name (`/target` with partial matching), then `/tm [exists,nodead] <icon>`,
-   and `/ping [@target,exists,nodead] attack` where pings exist. When names
+   and, where pings exist, `/ping [@target,harm,nodead] attack;
+   [@target,help,nodead] assist; [@target,exists,nodead] warning`. When names
    carry their own markers, each name is cleared, targeted and marked in turn,
    and a last pass leaves you targeting the first-listed name that's around.
 
@@ -91,8 +93,11 @@ It checks every 0.3 s and also whenever a nameplate appears. This means:
 - An NPC is found only once it's within nameplate range (about 40–60 yd) or you
   mouse over it. It doesn't search the whole zone. The exception is NPCs with
   a minimap vignette (rares and the like), which the radar sees much further out.
-- **Enemy nameplates must be on** (press V). For friendly quest NPCs,
-  friendly NPC nameplates must be on too.
+- **Enemy nameplates must be on** (press V). Friendly NPC nameplates are a
+  separate, per-character setting (`nameplateShowFriendlyNPCs`) that is off
+  by default; **Show friendly NPC nameplates while scanning** turns it on for
+  the scan and restores yours afterwards, the same way as the screen-edge
+  option.
 - Dead NPCs are skipped.
 - Inside instances, Midnight hides NPC names from addons (they come back as
   secret values). There's no way for an addon to compare them, so the

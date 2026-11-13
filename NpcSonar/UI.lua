@@ -22,7 +22,7 @@ local MAX_ROWS = ns.MAX_NPCS
 local SPEAKER = "Interface\\AddOns\\NpcSonar\\Media\\speaker"  -- from assets/make_speaker.py
 
 local frame, rowsArea, addBtn, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, pinToggle, deathToggle, radarToggle, waypointToggle, soundLabel, listLabel
+local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, soundLabel, listLabel
 local tiles = {}
 local rows = {}         -- row widgets, reused; rows[i] shows ns.db.npcs[i]
 local topHeight, lowerHeight
@@ -534,6 +534,16 @@ local function Build()
     partialToggle:SetPoint("TOPLEFT", 0, Row(18, 6))
     Tooltip(partialToggle, "Match any NPC whose name contains the text")
 
+    friendlyToggle = S.Toggle(lower, "Show friendly NPC nameplates while scanning", function(on)
+        ns.db.friendlyPlates = on
+        ns.UpdatePinning()
+    end)
+    friendlyToggle:SetPoint("TOPLEFT", 0, Row(18, 6))
+    Tooltip(friendlyToggle, "Friendly NPCs (quest givers, vendors) only get a nameplate when\n"
+        .. "friendly NPC nameplates are on, and without one they are only found\n"
+        .. "under the mouse or as your target. Turns them on during the scan\n"
+        .. "and puts your setting back when it stops.")
+
     pinToggle = S.Toggle(lower, "Keep target's nameplate on screen", function(on)
         ns.db.pinTarget = on
         ns.UpdatePinning()
@@ -692,6 +702,7 @@ function ns.Refresh()
 
     for _, t in pairs(tiles) do PaintTile(t) end
     partialToggle:SetChecked(ns.db.partial)
+    friendlyToggle:SetChecked(ns.db.friendlyPlates)
     pinToggle:SetChecked(ns.db.pinTarget)
     deathToggle:SetChecked(ns.db.doneOnDeath)
     radarToggle:SetChecked(ns.db.radar)

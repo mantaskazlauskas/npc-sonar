@@ -186,8 +186,12 @@ local function BuildMacro()
     end
     -- Pings are retail-only. Leave the line out where the system doesn't
     -- exist, or every click would print an unknown-command error.
+    -- The ping type follows the target: an attack ping is refused on a
+    -- friendly unit, so friendly NPCs get "assist", and anything neither
+    -- attackable nor friendly (some neutral NPCs) gets "warning".
     if C_Ping then
-        lines[#lines + 1] = "/ping [@target,exists,nodead] attack"
+        lines[#lines + 1] = "/ping [@target,harm,nodead] attack; "
+            .. "[@target,help,nodead] assist; [@target,exists,nodead] warning"
     end
     return table.concat(lines, "\n")
 end

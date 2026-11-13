@@ -23,6 +23,7 @@ local DEFAULTS = {
     icon    = 8,      -- skull
     partial = false,  -- substring match instead of whole-name match
     pinTarget = true, -- while scanning, hold the target's plate at the screen edge (Pin.lua)
+    friendlyPlates = true, -- while scanning, show friendly NPC nameplates so they can be found (Pin.lua)
     doneOnDeath = true, -- stop looking for a name once an NPC found under it dies
     radar   = true,   -- detect matching rares on the minimap and point at them (Radar.lua)
     waypoint = true,  -- drop a map waypoint on rares the radar finds (Sightings.lua)
@@ -565,9 +566,17 @@ function ns.Debug()
     if not any then ns.Print("No target, mouseover or relevant nameplates. Target the NPC and run it again.") end
 end
 
+-- Enemy plates are the player's call (V toggles them), so they only get a
+-- warning. Friendly NPC plates are switched on for the scan when that option
+-- is on (Pin.lua); with it off, the player is told what they miss.
 local function WarnIfPlatesOff()
-    if C_CVar and C_CVar.GetCVarBool and not C_CVar.GetCVarBool("nameplateShowEnemies") then
-        ns.Print("Enemy nameplates are off (toggle with V), so only your target and mouseover can be scanned.")
+    if not (C_CVar and C_CVar.GetCVarBool) then return end
+    if not C_CVar.GetCVarBool("nameplateShowEnemies") then
+        ns.Print("Enemy nameplates are off (toggle with V), so enemies are only found as your target or under the mouse.")
+    end
+    if not ns.db.friendlyPlates and C_CVar.GetCVar("nameplateShowFriendlyNPCs") == "0" then
+        ns.Print("Friendly NPC nameplates are off, so friendly NPCs are only found as your target or under the mouse. "
+            .. "Turn on \"Show friendly NPC nameplates while scanning\" to fix that.")
     end
 end
 
