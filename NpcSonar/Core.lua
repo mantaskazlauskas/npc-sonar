@@ -28,7 +28,14 @@ local DEFAULTS = {
     radar   = true,   -- detect matching rares on the minimap and point at them (Radar.lua)
     waypoint = true,  -- drop a map waypoint on rares the radar finds (Sightings.lua)
     sound   = "RAID_WARNING",  -- a SOUNDKIT key, or "NONE"
+    pingSize = 1,     -- ripple ring size, a multiple of the default (ns.PING_SIZES)
+    markerOffset = 0, -- nameplate marker's height above its default spot, in px (ns.MARKER_OFFSETS)
 }
+
+-- Steps offered in the window for the ripple size and the marker height. A
+-- saved value outside its list is reset to the default at load.
+ns.PING_SIZES = { 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5 }
+ns.MARKER_OFFSETS = { -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 40, 50, 60 }
 
 ns.ICON_NAMES = { "Star", "Circle", "Diamond", "Triangle", "Moon", "Square", "Cross", "Skull" }
 
@@ -314,12 +321,13 @@ end
 -- past the period would need a negative end delay. The ring's base alpha is
 -- 0, so it is invisible while stopped or waiting out its end delay.
 
+local MARKER_GAP    = 2                     -- px between plate top and marker at height 0
 local PING_TEXTURE  = "Interface\\AddOns\\NpcSonar\\Media\\ping_ring"
 local PING_COLOR    = { 0.25, 0.70, 0.95 }  -- the badge's sonar blue
 local PING_RINGS    = 2
 local PING_DURATION = 1.2                   -- one ring's expand-and-fade
 local PING_PERIOD   = 1.6                   -- time between pings of one ring
-local PING_SCALE    = { 0.6, 2.4 }          -- relative to OVERLAY_SIZE
+local PING_SCALE    = { 0.6, 2.4 }          -- relative to the ring's size: OVERLAY_SIZE * db.pingSize
 
 assert(PING_PERIOD >= PING_DURATION, "PING_PERIOD must cover PING_DURATION")
 
@@ -392,7 +400,6 @@ local function ShowOverlay(unit, want)
         created, o = pcall(CreateFrame, "Frame", nil, plate)
         if not created then return end
         o:SetSize(OVERLAY_SIZE, OVERLAY_SIZE)
-        o:SetPoint("BOTTOM", plate, "TOP", 0, 2)
         o.tex = o:CreateTexture(nil, "OVERLAY")
         o.tex:SetAllPoints()
         o.pings = {}
@@ -401,10 +408,25 @@ local function ShowOverlay(unit, want)
         end
         overlays[plate] = o
     end
+    -- Re-anchored only when the marker height setting changed. The offset is
+    -- in the plate's own scale, so it shrinks and grows with the plate.
+    local offset = ns.db.markerOffset or 0
+    if o.offset ~= offset then
+        o:ClearAllPoints()
+        o:SetPoint("BOTTOM", plate, "TOP", 0, MARKER_GAP + offset)
+        o.offset = offset
+    end
     o.tex:SetTexture(ns.IconPath(ns.IconFor(want)))
     local color = ns.ColorFor(want)
+    -- The Scale animation is relative to the texture's size, so resizing the
+    -- ring scales the whole ripple, start and end alike, without rebuilding
+    -- the animation. Done on every show so a change in the window is picked
+    -- up on the next scan tick.
+    local ringSize = OVERLAY_SIZE * (ns.db.pingSize or 1)
     for _, ag in ipairs(o.pings) do
-        ag:GetParent():SetVertexColor(color[1], color[2], color[3])
+        local ring = ag:GetParent()
+        ring:SetVertexColor(color[1], color[2], color[3])
+        ring:SetSize(ringSize, ringSize)
     end
     o:Show()
     -- The first ring is played at once on every start, so if it isn't
@@ -681,6 +703,12 @@ events:SetScript("OnEvent", function(self, event, arg1)
         if NpcSonarDB.sound ~= nil and NpcSonarDB.sound ~= "NONE"
             and not (SOUNDKIT and SOUNDKIT[NpcSonarDB.sound]) then
             NpcSonarDB.sound = nil -- saved on a client that had this sound; this one doesn't
+        end
+        if NpcSonarDB.pingSize ~= nil and not tContains(ns.PING_SIZES, NpcSonarDB.pingSize) then
+            NpcSonarDB.pingSize = nil
+        end
+        if NpcSonarDB.markerOffset ~= nil and not tContains(ns.MARKER_OFFSETS, NpcSonarDB.markerOffset) then
+            NpcSonarDB.markerOffset = nil
         end
         for k, v in pairs(DEFAULTS) do
             if NpcSonarDB[k] == nil then NpcSonarDB[k] = v end

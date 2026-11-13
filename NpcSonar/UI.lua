@@ -22,7 +22,7 @@ local MAX_ROWS = ns.MAX_NPCS
 local SPEAKER = "Interface\\AddOns\\NpcSonar\\Media\\speaker"  -- from assets/make_speaker.py
 
 local frame, rowsArea, addBtn, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, soundLabel, listLabel
+local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, soundLabel, pingLabel, heightLabel, listLabel
 local tiles = {}
 local rows = {}         -- row widgets, reused; rows[i] shows ns.db.npcs[i]
 local topHeight, lowerHeight
@@ -621,6 +621,52 @@ local function Build()
     prevBtn:SetScript("OnClick", function() Step(-1) end)
     nextBtn:SetScript("OnClick", function() Step(1) end)
 
+    -- Nameplate marker look: two < value > steppers side by side, each over a
+    -- list of allowed values (Core.lua). They stop at the ends rather than
+    -- wrapping, so a click past the largest value doesn't jump to the
+    -- smallest. Matched plates pick a change up on the next scan tick.
+    local stepW = (WIDTH - PAD * 2 - 8) / 2
+    local capY = Row(14)
+    local stepY = Row(26, 12)
+
+    -- Returns the label, which ns.Refresh fills in.
+    local function Stepper(left, caption, values, key, tooltip)
+        local cap = S.Caption(lower, caption)
+        cap:SetPoint("TOPLEFT", left, capY)
+
+        local less = S.Button(lower, "<", 28, 26)
+        less:SetPoint("TOPLEFT", left, stepY)
+        local more = S.Button(lower, ">", 28, 26)
+        more:SetPoint("TOPLEFT", left + stepW - 28, stepY)
+
+        local box = CreateFrame("Frame", nil, lower, "BackdropTemplate")
+        box:SetPoint("TOPLEFT", less, "TOPRIGHT", 4, 0)
+        box:SetPoint("BOTTOMRIGHT", more, "BOTTOMLEFT", -4, 0)
+        S.Backdrop(box, C.panel)
+        box:EnableMouse(true)  -- for the tooltip
+        local label = S.Font(box, 12, C.text)
+        label:SetPoint("CENTER")
+        Tooltip(box, tooltip)
+
+        local function StepBy(delta)
+            local at = 1
+            for i, v in ipairs(values) do
+                if v == ns.db[key] then at = i end
+            end
+            ns.db[key] = values[math.max(1, math.min(#values, at + delta))]
+            ns.Refresh()
+        end
+        less:SetScript("OnClick", function() StepBy(-1) end)
+        more:SetScript("OnClick", function() StepBy(1) end)
+        return label
+    end
+
+    pingLabel = Stepper(0, "Ripple size", ns.PING_SIZES, "pingSize",
+        "Size of the sonar rings behind the nameplate marker")
+    heightLabel = Stepper(stepW + 8, "Marker height", ns.MARKER_OFFSETS, "markerOffset",
+        "Moves the marker up or down from the nameplate,\n"
+        .. "e.g. to clear buffs and debuffs shown above it.")
+
     -- Status -------------------------------------------------------------------
     -- Three lines at 11pt: the "Found" line plus a hint that wraps once.
     local statusY = Row(60, 12)
@@ -710,6 +756,8 @@ function ns.Refresh()
     UpdateListLabel()
     soundLabel:SetText(SoundLabel(ns.db.sound))
     soundLabel:SetTextColor(unpack(ns.db.sound == "NONE" and C.muted or C.text))
+    pingLabel:SetText(("%d%%"):format(math.floor(ns.db.pingSize * 100 + 0.5)))
+    heightLabel:SetText(("%+d px"):format(ns.db.markerOffset))
     startBtn:SetLabel(on and "Restart scan" or "Start scan")
     stopBtn:SetEnabled(on)
     statusText:SetText(lastStatus)

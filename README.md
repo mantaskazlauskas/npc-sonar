@@ -50,6 +50,7 @@ alerts you. It's meant for quests where the mob you need patrols.
   sessions. **Waypoint**, **Share** (group chat, or guild when solo) and
   **Log** act on them; also `/npcsonar waypoint|share|log`.
 - **Default sound** picks the sound for NPCs whose sound is Default. Use the arrows to step through the game's alert sounds (each one plays as you pick it), click the name to hear it again, or choose **None**. Only sounds your client has are listed.
+- **Ripple size** makes the sonar rings behind the nameplate marker smaller or bigger, from 50% to 250% of the default. **Marker height** moves the marker down (to −20 px) or up (to +60 px) from its default spot just above the nameplate, for example to clear buffs and debuffs shown there. Marked plates pick up either change within a moment.
 
 ## Marking
 
