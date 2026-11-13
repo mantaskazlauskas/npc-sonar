@@ -15,6 +15,7 @@
 # Bindings.xml is picked up by the client automatically and is not listed.
 Core.lua
 Pin.lua
+Lists.lua
 Style.lua
 UI.lua
 MarkButton.lua

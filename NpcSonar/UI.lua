@@ -12,7 +12,7 @@ local C = S.C
 local WIDTH, PAD = 320, 12
 
 local frame, nameBox, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, pinToggle, deathToggle, radarToggle, soundLabel
+local partialToggle, pinToggle, deathToggle, radarToggle, soundLabel, listLabel
 local tiles = {}
 
 local function Tooltip(widget, text)
@@ -22,6 +22,27 @@ local function Tooltip(widget, text)
         GameTooltip:Show()
     end)
     widget:HookScript("OnLeave", GameTooltip_Hide)
+end
+
+-- The list whose names are in the box, or nil. Once the names are edited the
+-- box no longer holds "that list", so nothing is shown and Del does nothing.
+local function ShownList()
+    local current = ns.db.currentList
+    local lists = ns.db.lists or {}
+    if current and lists[current] == ns.db.names then return current end
+    return nil
+end
+
+local function UpdateListLabel()
+    if not listLabel then return end
+    local shown = ShownList()
+    if shown then
+        listLabel:SetText(shown)
+        listLabel:SetTextColor(unpack(C.text))
+    else
+        listLabel:SetText(#ns.ListNames() > 0 and "(unsaved)" or "(none saved)")
+        listLabel:SetTextColor(unpack(C.muted))
+    end
 end
 
 local function PaintTile(t)
@@ -128,7 +149,10 @@ local function Build()
         ns.Start(self:GetText())
     end)
     nameBox:HookScript("OnTextChanged", function(self, userInput)
-        if userInput then ns.db.names = self:GetText() end
+        if userInput then
+            ns.db.names = self:GetText()
+            UpdateListLabel()
+        end
     end)
 
     targetBtn:SetScript("OnClick", function()
@@ -136,10 +160,50 @@ local function Build()
         if type(name) == "string" then
             nameBox:SetText(name)
             ns.db.names = name
+            UpdateListLabel()
         else
             ns.Print("Target an NPC first.")
         end
     end)
+
+    -- Saved lists: < name > stepper that loads, plus Save and Del ---------------
+    local listCap = S.Caption(frame, "Saved lists")
+    listCap:SetPoint("TOPLEFT", PAD, Row(14))
+
+    local listY = Row(26, 14)
+    local listPrev = S.Button(frame, "<", 28, 26)
+    listPrev:SetPoint("TOPLEFT", PAD, listY)
+    local listDel = S.Button(frame, "Del", 40, 26)
+    listDel:SetPoint("TOPRIGHT", -PAD, listY)
+    local listSave = S.Button(frame, "Save", 48, 26)
+    listSave:SetPoint("RIGHT", listDel, "LEFT", -4, 0)
+    local listNext = S.Button(frame, ">", 28, 26)
+    listNext:SetPoint("RIGHT", listSave, "LEFT", -6, 0)
+
+    local listBox = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    listBox:SetPoint("TOPLEFT", listPrev, "TOPRIGHT", 4, 0)
+    listBox:SetPoint("BOTTOMRIGHT", listNext, "BOTTOMLEFT", -4, 0)
+    S.Backdrop(listBox, C.panel)
+    listLabel = S.Font(listBox, 12, C.text)
+    listLabel:SetPoint("LEFT", 8, 0)
+    listLabel:SetPoint("RIGHT", -8, 0)
+    listLabel:SetWordWrap(false)
+
+    -- Refresh won't overwrite a focused box, so let go of it before loading.
+    listPrev:SetScript("OnClick", function() nameBox:ClearFocus(); ns.StepList(-1) end)
+    listNext:SetScript("OnClick", function() nameBox:ClearFocus(); ns.StepList(1) end)
+    listSave:SetScript("OnClick", function()
+        nameBox:ClearFocus()
+        ns.PromptSaveList()
+    end)
+    listDel:SetScript("OnClick", function()
+        local shown = ShownList()
+        if shown then ns.ConfirmDeleteList(shown) end
+    end)
+    Tooltip(listPrev, "Load the previous saved list (replaces the names above)")
+    Tooltip(listNext, "Load the next saved list (replaces the names above)")
+    Tooltip(listSave, "Save the names above as a list")
+    Tooltip(listDel, "Delete the list shown")
 
     -- Marker tiles -------------------------------------------------------------
     local markCap = S.Caption(frame, "Default marker")
@@ -308,6 +372,7 @@ function ns.Refresh()
     pinToggle:SetChecked(ns.db.pinTarget)
     deathToggle:SetChecked(ns.db.doneOnDeath)
     radarToggle:SetChecked(ns.db.radar)
+    UpdateListLabel()
     local soundName = "None"
     for _, s in ipairs(ns.SoundChoices()) do
         if s.key == ns.db.sound then soundName = s.label end

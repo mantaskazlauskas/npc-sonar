@@ -561,7 +561,24 @@ SLASH_NPCSONAR2 = "/npcd"
 SlashCmdList.NPCSONAR = function(msg)
     msg = strtrim(msg or "")
     local cmd = msg:lower()
-    if cmd == "" then
+    -- "save", "load" and "delete" take the rest of the line as a list name;
+    -- without one they print the usage instead of starting a scan for an
+    -- NPC called "save".
+    local verb, rest = msg:match("^(%S+)%s*(.-)$")
+    verb = verb and verb:lower()
+    if (verb == "save" or verb == "load" or verb == "delete") and rest == "" then
+        ns.Print(("Usage: /npcsonar %s <list name>"):format(verb))
+        return
+    end
+    if verb == "save" then
+        ns.SaveList(rest)
+    elseif verb == "load" then
+        ns.LoadList(rest)
+    elseif verb == "delete" then
+        ns.DeleteList(rest)
+    elseif cmd == "lists" then
+        ns.PrintLists()
+    elseif cmd == "" then
         ns.ToggleWindow()
     elseif cmd == "stop" then
         ns.Stop()
