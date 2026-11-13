@@ -156,8 +156,71 @@ end
 --------------------------------------------------------------------------------
 -- Nameplate overlays. One per plate frame, reused as plates are recycled; the
 -- overlay is a child of the plate so it moves, scales and hides with it.
+--
+-- Behind the icon, sonar rings expand and fade on a loop. Each ring has its
+-- own looping group with the same period (duration + end delay), and ring i
+-- is started (i-1)/PING_RINGS of a period after the first, so the pings are
+-- evenly spaced and may overlap. The stagger is a timer rather than a start
+-- delay: a start delay counts on every loop, and pushing a late ring's delay
+-- past the period would need a negative end delay. The ring's base alpha is
+-- 0, so it is invisible while stopped or waiting out its end delay.
+
+local PING_TEXTURE  = "Interface\\AddOns\\NpcSonar\\Media\\ping_ring"
+local PING_COLOR    = { 0.25, 0.70, 0.95 }  -- the badge's sonar blue
+local PING_RINGS    = 2
+local PING_DURATION = 1.2                   -- one ring's expand-and-fade
+local PING_PERIOD   = 1.6                   -- time between pings of one ring
+local PING_SCALE    = { 0.6, 2.4 }          -- relative to OVERLAY_SIZE
+
+assert(PING_PERIOD >= PING_DURATION, "PING_PERIOD must cover PING_DURATION")
 
 local overlays = {}
+
+local function AddPingRing(o)
+    local ring = o:CreateTexture(nil, "BACKGROUND")
+    ring:SetTexture(PING_TEXTURE)
+    ring:SetBlendMode("ADD")
+    ring:SetVertexColor(PING_COLOR[1], PING_COLOR[2], PING_COLOR[3])
+    ring:SetPoint("CENTER")
+    ring:SetSize(OVERLAY_SIZE, OVERLAY_SIZE)
+    ring:SetAlpha(0)
+
+    local ag = ring:CreateAnimationGroup()
+    ag:SetLooping("REPEAT")
+
+    local scale = ag:CreateAnimation("Scale")
+    scale:SetScaleFrom(PING_SCALE[1], PING_SCALE[1])
+    scale:SetScaleTo(PING_SCALE[2], PING_SCALE[2])
+    scale:SetSmoothing("OUT")
+
+    local fade = ag:CreateAnimation("Alpha")
+    fade:SetFromAlpha(0.9)
+    fade:SetToAlpha(0)
+
+    for _, anim in ipairs({ scale, fade }) do
+        anim:SetDuration(PING_DURATION)
+        anim:SetEndDelay(PING_PERIOD - PING_DURATION)
+    end
+    return ag
+end
+
+-- Stops every ring and starts them again in phase. The token makes timers
+-- left over from an earlier start do nothing if they fire after a restart.
+local function StartPings(o)
+    o.pingToken = (o.pingToken or 0) + 1
+    local token = o.pingToken
+    for i, ag in ipairs(o.pings) do
+        ag:Stop()
+        local delay = (i - 1) * PING_PERIOD / PING_RINGS
+        if delay == 0 then
+            ag:Play()
+        else
+            C_Timer.After(delay, function()
+                if o.pingToken == token then ag:Play() end
+            end)
+        end
+    end
+end
 
 local function ShowOverlay(unit)
     local ok, plate = pcall(C_NamePlate.GetNamePlateForUnit, unit)
@@ -174,10 +237,17 @@ local function ShowOverlay(unit)
         o:SetPoint("BOTTOM", plate, "TOP", 0, 2)
         o.tex = o:CreateTexture(nil, "OVERLAY")
         o.tex:SetAllPoints()
+        o.pings = {}
+        for i = 1, PING_RINGS do
+            o.pings[i] = AddPingRing(o)
+        end
         overlays[plate] = o
     end
     o.tex:SetTexture(ns.IconPath(ns.db.icon))
     o:Show()
+    -- The first ring is played at once on every start, so if it isn't
+    -- playing the set was never started or has been stopped.
+    if not o.pings[1]:IsPlaying() then StartPings(o) end
     o.used = true
 end
 
