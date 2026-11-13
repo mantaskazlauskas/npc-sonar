@@ -272,7 +272,7 @@ local function Build()
     Tooltip(radarToggle, "Rares and other special NPCs show on the minimap long before\n"
         .. "they get a nameplate. When one matches, you are alerted and an\n"
         .. "arrow points at it with the distance. Drag the arrow to move it.\n"
-        .. "Doesn't work inside instances.")
+        .. "Inside instances it can only alert, without the arrow.")
 
     waypointToggle = S.Toggle(frame, "Set a map waypoint on rares it finds", function(on)
         ns.db.waypoint = on

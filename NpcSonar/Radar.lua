@@ -14,8 +14,9 @@
 -- counter-clockwise too, so the arrow (drawn pointing up) is rotated by
 -- bearing - facing.
 --
--- Positions are unavailable inside instances, and vignette names can be
--- secret there (Midnight); either way the radar simply finds nothing.
+-- Positions are unavailable inside instances: a match there is still
+-- announced, but gets no arrow. Vignette names can also be secret there
+-- (Midnight), and a secret name never matches.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
