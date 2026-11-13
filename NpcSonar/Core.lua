@@ -24,6 +24,7 @@ local DEFAULTS = {
     icon    = 8,      -- skull
     partial = false,  -- substring match instead of whole-name match
     pinTarget = true, -- while scanning, hold the target's plate at the screen edge (Pin.lua)
+    doneOnDeath = true, -- stop looking for a name once an NPC found under it dies
     sound   = "RAID_WARNING",  -- a SOUNDKIT key, or "NONE"
 }
 
@@ -90,7 +91,7 @@ end
 ns.scanning = false
 local wanted = {}
 local ticker
-local alerted = {}       -- GUIDs already announced this scan
+local alerted = {}       -- GUID -> wanted entry it matched, for NPCs announced this scan
 local lastAlertAt = -math.huge
 
 --------------------------------------------------------------------------------
@@ -118,10 +119,13 @@ function ns.ToggleMinimapButton() end
 ns.found = false  -- a match is in range right now; drives the badge colour
 
 local function ParseNames(text)
-    local list = {}
+    local list, seen = {}, {}
     for part in (text or ""):gmatch("[^,;]+") do
         part = strtrim(part):lower()
-        if part ~= "" then list[#list + 1] = part end
+        if part ~= "" and not seen[part] then
+            seen[part] = true
+            list[#list + 1] = part
+        end
     end
     return list
 end
@@ -130,9 +134,21 @@ function ns.WantedNames()
     return wanted
 end
 
--- Returns the unit's display name when it is a living NPC we are looking for.
--- The second return is true when the unit's name is secret: it might be a
--- match, but the client won't let us look (Midnight, inside instances).
+-- The wanted entry a display name matches, or nil.
+local function WantedFor(name)
+    local lower = name:lower()
+    for _, want in ipairs(wanted) do
+        if lower == want or (ns.db.partial and lower:find(want, 1, true)) then
+            return want
+        end
+    end
+    return nil
+end
+
+-- Returns the unit's display name when it is a living NPC we are looking for,
+-- and the wanted entry it matched. The second return is true instead when the
+-- unit's name is secret: it might be a match, but the client won't let us
+-- look (Midnight, inside instances).
 local function Match(unit)
     if not Clean(UnitExists(unit)) then return nil end
     -- Unreadable answers fall through: better to consider a unit than to go
@@ -145,12 +161,8 @@ local function Match(unit)
     local name = raw
     if type(name) ~= "string" then return nil end
 
-    local lower = name:lower()
-    for _, want in ipairs(wanted) do
-        if lower == want or (ns.db.partial and lower:find(want, 1, true)) then
-            return name
-        end
-    end
+    local want = WantedFor(name)
+    if want then return name, want end
     return nil
 end
 
@@ -261,12 +273,12 @@ end
 
 --------------------------------------------------------------------------------
 
-local function Alert(unit, name)
+local function Alert(unit, name, want)
     local guid = Clean(UnitGUID(unit))
     if guid and alerted[guid] then return end
     local now = GetTime()
     if now - lastAlertAt < ALERT_COOLDOWN then return end
-    if guid then alerted[guid] = true end
+    if guid then alerted[guid] = want end
     lastAlertAt = now
 
     local msg = ("Found %s %s"):format(ns.IconString(ns.db.icon), name)
@@ -280,17 +292,49 @@ local function Alert(unit, name)
     if FlashClientIcon then FlashClientIcon() end
 end
 
+-- An NPC we announced is now dead (you usually still have it targeted, or
+-- its corpse is under the mouse). Its name is done: drop it from this scan,
+-- and stop when nothing is left. ns.db.names is untouched, so the next Start
+-- looks for everything again.
+local function CheckDeath(unit)
+    local guid = Clean(UnitGUID(unit))
+    local want = guid and alerted[guid]
+    if not want or not Clean(UnitIsDead(unit)) then return false end
+    -- Forget every NPC found under this name, so a second corpse of the same
+    -- name can't announce it again.
+    for g, w in pairs(alerted) do
+        if w == want then alerted[g] = nil end
+    end
+    local removed = false
+    for i, w in ipairs(wanted) do
+        if w == want then table.remove(wanted, i); removed = true; break end
+    end
+    if not removed then return false end
+    local name = Clean(UnitName(unit))
+    name = type(name) == "string" and name or want
+    if #wanted == 0 then
+        ns.Print(("%s is dead. Nothing left to look for, scan stopped."):format(name))
+        ns.Stop()
+        return true
+    end
+    ns.Print(("%s is dead. Still looking for: %s"):format(name, table.concat(wanted, ", ")))
+    ns.UpdateMarkButton()
+    return false
+end
+
 local function Scan()
     if not ns.scanning then return end
     local firstName, sawHidden
 
     for _, unit in ipairs(UNITS) do
-        local name, hidden = Match(unit)
-        sawHidden = sawHidden or hidden
+        if ns.db.doneOnDeath and next(alerted) and CheckDeath(unit) then return end
+        local name, want = Match(unit)
         if name then
             firstName = firstName or name
             if PLATE_UNITS[unit] then ShowOverlay(unit) end
-            Alert(unit, name)
+            Alert(unit, name, want)
+        elseif want then
+            sawHidden = true
         end
     end
     HideOverlays(true)

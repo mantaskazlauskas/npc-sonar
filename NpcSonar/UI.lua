@@ -12,7 +12,7 @@ local C = S.C
 local WIDTH, PAD = 320, 12
 
 local frame, nameBox, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, pinToggle, soundLabel
+local partialToggle, pinToggle, deathToggle, soundLabel
 local tiles = {}
 
 local function Tooltip(widget, text)
@@ -33,7 +33,7 @@ end
 
 local function Build()
     frame = CreateFrame("Frame", "NpcSonarFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(WIDTH, 380)
+    frame:SetWidth(WIDTH)  -- height is set at the end of Build
     frame:SetFrameStrata("DIALOG")
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
@@ -97,16 +97,27 @@ local function Build()
     line:SetHeight(1)
     line:SetColorTexture(unpack(C.border))
 
+    -- Rows are stacked from the top with a running offset: Row(height, gapAfter)
+    -- returns the row's top and moves the cursor below it. The window's height
+    -- is worked out from where the cursor ends.
+    local y = -46
+    local function Row(height, gapAfter)
+        local top = y
+        y = y - height - (gapAfter or 0)
+        return top
+    end
+
     -- Name input ---------------------------------------------------------------
     local nameCap = S.Caption(frame, "NPC name")
-    nameCap:SetPoint("TOPLEFT", PAD, -46)
+    nameCap:SetPoint("TOPLEFT", PAD, Row(14))
 
+    local rowY = Row(26, 14)
     local targetBtn = S.Button(frame, "Target", 64, 26)
-    targetBtn:SetPoint("TOPRIGHT", -PAD, -60)
+    targetBtn:SetPoint("TOPRIGHT", -PAD, rowY)
     Tooltip(targetBtn, "Use your current target's name")
 
     nameBox = S.Input(frame, 1, 26, "e.g. Shade of Ashar, Grimtooth")
-    nameBox:SetPoint("TOPLEFT", PAD, -60)
+    nameBox:SetPoint("TOPLEFT", PAD, rowY)
     nameBox:SetPoint("RIGHT", targetBtn, "LEFT", -6, 0)
     nameBox:SetScript("OnEnterPressed", function(self)
         self:ClearFocus()
@@ -128,14 +139,15 @@ local function Build()
 
     -- Marker tiles -------------------------------------------------------------
     local markCap = S.Caption(frame, "Marker")
-    markCap:SetPoint("TOPLEFT", PAD, -100)
+    markCap:SetPoint("TOPLEFT", PAD, Row(14))
 
     local tileSize, gap = 32, 5
+    local tilesY = Row(tileSize, 14)
     for slot = 1, 8 do
         local i = 9 - slot -- skull first
         local t = CreateFrame("Button", nil, frame, "BackdropTemplate")
         t:SetSize(tileSize, tileSize)
-        t:SetPoint("TOPLEFT", PAD + (slot - 1) * (tileSize + gap), -114)
+        t:SetPoint("TOPLEFT", PAD + (slot - 1) * (tileSize + gap), tilesY)
         t.index = i
         S.Backdrop(t, C.panel)
         t.icon = t:CreateTexture(nil, "ARTWORK")
@@ -165,27 +177,35 @@ local function Build()
         ns.db.partial = on
         ns.UpdateMarkButton()
     end)
-    partialToggle:SetPoint("TOPLEFT", PAD, -160)
+    partialToggle:SetPoint("TOPLEFT", PAD, Row(18, 6))
     Tooltip(partialToggle, "Match any NPC whose name contains the text")
 
     pinToggle = S.Toggle(frame, "Keep target's nameplate on screen", function(on)
         ns.db.pinTarget = on
         ns.UpdatePinning()
     end)
-    pinToggle:SetPoint("TOPLEFT", PAD, -184)
+    pinToggle:SetPoint("TOPLEFT", PAD, Row(18, 6))
     Tooltip(pinToggle, "While scanning, your target's nameplate stays at the screen edge\n"
         .. "when it is behind you or off to the side. Changes game settings\n"
         .. "during the scan and puts yours back when it stops.")
 
+    deathToggle = S.Toggle(frame, "Stop looking for an NPC once it dies", function(on)
+        ns.db.doneOnDeath = on
+    end)
+    deathToggle:SetPoint("TOPLEFT", PAD, Row(18, 12))
+    Tooltip(deathToggle, "When a found NPC dies, drop its name from this scan.\n"
+        .. "The scan stops once every name is done.")
+
     -- Alert sound: < name > stepper. Every step plays the sound so you hear
     -- what you picked; clicking the name plays it again.
     local soundCap = S.Caption(frame, "Alert sound")
-    soundCap:SetPoint("TOPLEFT", PAD, -214)
+    soundCap:SetPoint("TOPLEFT", PAD, Row(14))
 
+    local soundY = Row(26, 12)
     local prevBtn = S.Button(frame, "<", 28, 26)
-    prevBtn:SetPoint("TOPLEFT", PAD, -228)
+    prevBtn:SetPoint("TOPLEFT", PAD, soundY)
     local nextBtn = S.Button(frame, ">", 28, 26)
-    nextBtn:SetPoint("TOPRIGHT", -PAD, -228)
+    nextBtn:SetPoint("TOPRIGHT", -PAD, soundY)
 
     local soundBox = CreateFrame("Button", nil, frame, "BackdropTemplate")
     soundBox:SetPoint("TOPLEFT", prevBtn, "TOPRIGHT", 4, 0)
@@ -220,10 +240,11 @@ local function Build()
     nextBtn:SetScript("OnClick", function() Step(1) end)
 
     -- Status -------------------------------------------------------------------
-    local statusPanel = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    statusPanel:SetPoint("TOPLEFT", PAD, -266)
-    statusPanel:SetPoint("TOPRIGHT", -PAD, -266)
     -- Three lines at 11pt: the "Found" line plus a hint that wraps once.
+    local statusY = Row(60, 12)
+    local statusPanel = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    statusPanel:SetPoint("TOPLEFT", PAD, statusY)
+    statusPanel:SetPoint("TOPRIGHT", -PAD, statusY)
     statusPanel:SetHeight(60)
     S.Backdrop(statusPanel, C.panel)
 
@@ -246,6 +267,9 @@ local function Build()
     stopBtn = S.Button(frame, "Stop", half, 30, "secondary")
     stopBtn:SetPoint("BOTTOMRIGHT", -PAD, PAD)
     stopBtn:SetScript("OnClick", function() ns.Stop() end)
+
+    -- The action buttons sit in the space left under the last row.
+    frame:SetHeight(-y + 30 + PAD)
 end
 
 --------------------------------------------------------------------------------
@@ -268,6 +292,7 @@ function ns.Refresh()
     for _, t in pairs(tiles) do PaintTile(t) end
     partialToggle:SetChecked(ns.db.partial)
     pinToggle:SetChecked(ns.db.pinTarget)
+    deathToggle:SetChecked(ns.db.doneOnDeath)
     local soundName = "None"
     for _, s in ipairs(ns.SoundChoices()) do
         if s.key == ns.db.sound then soundName = s.label end
