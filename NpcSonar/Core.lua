@@ -26,6 +26,7 @@ local DEFAULTS = {
     pinTarget = true, -- while scanning, hold the target's plate at the screen edge (Pin.lua)
     doneOnDeath = true, -- stop looking for a name once an NPC found under it dies
     radar   = true,   -- detect matching rares on the minimap and point at them (Radar.lua)
+    waypoint = true,  -- drop a map waypoint on rares the radar finds (Sightings.lua)
     sound   = "RAID_WARNING",  -- a SOUNDKIT key, or "NONE"
 }
 
@@ -142,6 +143,7 @@ function ns.RadarScan() end
 function ns.RadarTick() end
 function ns.ResetRadar() end
 function ns.RadarStatus() return nil end
+function ns.RecordSighting(_name, _want, _guid) end
 function ns.ToggleMinimapButton() end
 
 ns.found = false  -- a match is in range right now; drives the badge colour
@@ -360,6 +362,7 @@ local function Alert(unit, name, want)
     if guid and alerted[guid] then return end
     if not ns.Announce(("Found %s %s"):format(ns.IconString(ns.IconFor(want)), name)) then return end
     if guid then alerted[guid] = want end
+    ns.RecordSighting(name, want, nil)
 end
 
 -- An NPC we announced is now dead (you usually still have it targeted, or
@@ -578,6 +581,12 @@ SlashCmdList.NPCSONAR = function(msg)
         ns.DeleteList(rest)
     elseif cmd == "lists" then
         ns.PrintLists()
+    elseif cmd == "log" then
+        ns.PrintSightings()
+    elseif cmd == "share" then
+        ns.ShareLatest()
+    elseif cmd == "waypoint" then
+        ns.WaypointLatest()
     elseif cmd == "" then
         ns.ToggleWindow()
     elseif cmd == "stop" then

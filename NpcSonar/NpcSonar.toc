@@ -16,6 +16,7 @@
 Core.lua
 Pin.lua
 Lists.lua
+Sightings.lua
 Style.lua
 UI.lua
 MarkButton.lua

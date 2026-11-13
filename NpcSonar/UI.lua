@@ -12,7 +12,7 @@ local C = S.C
 local WIDTH, PAD = 320, 12
 
 local frame, nameBox, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, pinToggle, deathToggle, radarToggle, soundLabel, listLabel
+local partialToggle, pinToggle, deathToggle, radarToggle, waypointToggle, soundLabel, listLabel
 local tiles = {}
 
 local function Tooltip(widget, text)
@@ -268,11 +268,18 @@ local function Build()
         ns.db.radar = on
         ns.RadarScan()
     end)
-    radarToggle:SetPoint("TOPLEFT", PAD, Row(18, 12))
+    radarToggle:SetPoint("TOPLEFT", PAD, Row(18, 6))
     Tooltip(radarToggle, "Rares and other special NPCs show on the minimap long before\n"
         .. "they get a nameplate. When one matches, you are alerted and an\n"
         .. "arrow points at it with the distance. Drag the arrow to move it.\n"
         .. "Doesn't work inside instances.")
+
+    waypointToggle = S.Toggle(frame, "Set a map waypoint on rares it finds", function(on)
+        ns.db.waypoint = on
+    end)
+    waypointToggle:SetPoint("TOPLEFT", PAD, Row(18, 12))
+    Tooltip(waypointToggle, "When the radar detects a match, put a map waypoint on it.\n"
+        .. "A waypoint you placed yourself is left alone.")
 
     -- Alert sound: < name > stepper. Every step plays the sound so you hear
     -- what you picked; clicking the name plays it again.
@@ -333,6 +340,22 @@ local function Build()
     statusText:SetJustifyV("TOP")
     statusText:SetWordWrap(true)
 
+    -- Last sighting: Waypoint / Share / Log ------------------------------------
+    local third = (WIDTH - PAD * 2 - 8) / 3
+    local sightY = Row(26, 12)
+    local wpBtn = S.Button(frame, "Waypoint", third, 26)
+    wpBtn:SetPoint("TOPLEFT", PAD, sightY)
+    wpBtn:SetScript("OnClick", function() ns.WaypointLatest() end)
+    Tooltip(wpBtn, "Put a map waypoint on the latest sighting")
+    local shareBtn = S.Button(frame, "Share", third, 26)
+    shareBtn:SetPoint("LEFT", wpBtn, "RIGHT", 4, 0)
+    shareBtn:SetScript("OnClick", function() ns.ShareLatest() end)
+    Tooltip(shareBtn, "Post the latest sighting to your group, or your guild if solo")
+    local logBtn = S.Button(frame, "Log", third, 26)
+    logBtn:SetPoint("LEFT", shareBtn, "RIGHT", 4, 0)
+    logBtn:SetScript("OnClick", function() ns.PrintSightings() end)
+    Tooltip(logBtn, "Print where each name was last seen (/npcsonar log)")
+
     -- Actions ------------------------------------------------------------------
     local half = (WIDTH - PAD * 2 - 8) / 2
     startBtn = S.Button(frame, "Start scan", half, 30, "primary")
@@ -372,6 +395,7 @@ function ns.Refresh()
     pinToggle:SetChecked(ns.db.pinTarget)
     deathToggle:SetChecked(ns.db.doneOnDeath)
     radarToggle:SetChecked(ns.db.radar)
+    waypointToggle:SetChecked(ns.db.waypoint)
     UpdateListLabel()
     local soundName = "None"
     for _, s in ipairs(ns.SoundChoices()) do

@@ -46,16 +46,33 @@ end
 
 -- The player's best map can be a small sub-map (a cave, a building) that
 -- doesn't hold the vignette; walk up to the parent maps until one does.
-local function Offset(guid)
+-- Returns the first non-nil result of fn(mapID).
+local function OnPlayerMaps(fn)
     local mapID = PlayerMap()
     for _ = 1, 4 do
         if not mapID or mapID == 0 then return nil end
-        local east, south = OffsetOn(guid, mapID)
-        if east then return east, south end
+        local a, b, c = fn(mapID)
+        if a then return a, b, c end
         local info = C_Map.GetMapInfo(mapID)
         mapID = info and info.parentMapID
     end
     return nil
+end
+
+local function Offset(guid)
+    return OnPlayerMaps(function(mapID) return OffsetOn(guid, mapID) end)
+end
+
+-- Map ID and position of a vignette, for waypoints and the sighting log.
+function ns.VignettePosition(guid)
+    return OnPlayerMaps(function(mapID)
+        -- A vignette outside a small sub-map can come back with coordinates
+        -- beyond its edges; keep walking up to a map that contains it.
+        local ok, pos = pcall(C_VignetteInfo.GetVignettePosition, guid, mapID)
+        if ok and pos and pos.x >= 0 and pos.x <= 1 and pos.y >= 0 and pos.y <= 1 then
+            return mapID, pos.x, pos.y
+        end
+    end)
 end
 
 --------------------------------------------------------------------------------
@@ -157,6 +174,7 @@ function ns.RadarScan()
                     :format(ns.IconString(ns.IconFor(want)), name,
                         east and "Follow the arrow." or "No direction available here.")) then
                 announced[guid] = true
+                ns.RecordSighting(name, want, guid)
             end
             local d = east and (east * east + south * south)
             if d and (not best or d < bestDist) then
