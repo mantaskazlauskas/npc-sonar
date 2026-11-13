@@ -23,6 +23,7 @@ local DEFAULTS = {
     names   = "",
     icon    = 8,      -- skull
     partial = false,  -- substring match instead of whole-name match
+    pinTarget = true, -- while scanning, hold the target's plate at the screen edge (Pin.lua)
     sound   = "RAID_WARNING",  -- a SOUNDKIT key, or "NONE"
 }
 
@@ -374,6 +375,7 @@ function ns.Start(text)
     lastAlertAt = -math.huge
     HideOverlays(false)
     if not ticker then ticker = C_Timer.NewTicker(SCAN_INTERVAL, Scan) end
+    ns.UpdatePinning()
     WarnIfPlatesOff()
     ns.SetStatus("Searching...")
     ns.Refresh()
@@ -387,6 +389,7 @@ end
 function ns.Stop()
     ns.scanning = false
     if ticker then ticker:Cancel(); ticker = nil end
+    ns.UpdatePinning()
     HideOverlays(false)
     ns.SetStatus("Stopped.")
     ns.Refresh()

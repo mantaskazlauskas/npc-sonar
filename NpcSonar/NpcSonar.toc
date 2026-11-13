@@ -1,4 +1,4 @@
-## Interface: 120105, 120100, 50503, 38002, 20506, 16001, 11508
+## Interface: 120105, 120100, 50504, 38002, 20506, 16001, 11509
 ## Title: NPC Sonar
 ## Notes: Scans for NPCs by name, shows an icon over their nameplates, and gives you a one-click sonar badge that targets and marks them.
 ## Author: mmantas
@@ -14,6 +14,7 @@
 # reads ns.Style at file scope.
 # Bindings.xml is picked up by the client automatically and is not listed.
 Core.lua
+Pin.lua
 Style.lua
 UI.lua
 MarkButton.lua

@@ -12,7 +12,7 @@ local C = S.C
 local WIDTH, PAD = 320, 12
 
 local frame, nameBox, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, soundLabel
+local partialToggle, pinToggle, soundLabel
 local tiles = {}
 
 local function Tooltip(widget, text)
@@ -33,7 +33,7 @@ end
 
 local function Build()
     frame = CreateFrame("Frame", "NpcSonarFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(WIDTH, 356)
+    frame:SetSize(WIDTH, 380)
     frame:SetFrameStrata("DIALOG")
     frame:SetClampedToScreen(true)
     frame:SetMovable(true)
@@ -168,15 +168,24 @@ local function Build()
     partialToggle:SetPoint("TOPLEFT", PAD, -160)
     Tooltip(partialToggle, "Match any NPC whose name contains the text")
 
+    pinToggle = S.Toggle(frame, "Keep target's nameplate on screen", function(on)
+        ns.db.pinTarget = on
+        ns.UpdatePinning()
+    end)
+    pinToggle:SetPoint("TOPLEFT", PAD, -184)
+    Tooltip(pinToggle, "While scanning, your target's nameplate stays at the screen edge\n"
+        .. "when it is behind you or off to the side. Changes game settings\n"
+        .. "during the scan and puts yours back when it stops.")
+
     -- Alert sound: < name > stepper. Every step plays the sound so you hear
     -- what you picked; clicking the name plays it again.
     local soundCap = S.Caption(frame, "Alert sound")
-    soundCap:SetPoint("TOPLEFT", PAD, -190)
+    soundCap:SetPoint("TOPLEFT", PAD, -214)
 
     local prevBtn = S.Button(frame, "<", 28, 26)
-    prevBtn:SetPoint("TOPLEFT", PAD, -204)
+    prevBtn:SetPoint("TOPLEFT", PAD, -228)
     local nextBtn = S.Button(frame, ">", 28, 26)
-    nextBtn:SetPoint("TOPRIGHT", -PAD, -204)
+    nextBtn:SetPoint("TOPRIGHT", -PAD, -228)
 
     local soundBox = CreateFrame("Button", nil, frame, "BackdropTemplate")
     soundBox:SetPoint("TOPLEFT", prevBtn, "TOPRIGHT", 4, 0)
@@ -212,8 +221,8 @@ local function Build()
 
     -- Status -------------------------------------------------------------------
     local statusPanel = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    statusPanel:SetPoint("TOPLEFT", PAD, -242)
-    statusPanel:SetPoint("TOPRIGHT", -PAD, -242)
+    statusPanel:SetPoint("TOPLEFT", PAD, -266)
+    statusPanel:SetPoint("TOPRIGHT", -PAD, -266)
     -- Three lines at 11pt: the "Found" line plus a hint that wraps once.
     statusPanel:SetHeight(60)
     S.Backdrop(statusPanel, C.panel)
@@ -258,6 +267,7 @@ function ns.Refresh()
     if not nameBox:HasFocus() then nameBox:SetText(ns.db.names or "") end
     for _, t in pairs(tiles) do PaintTile(t) end
     partialToggle:SetChecked(ns.db.partial)
+    pinToggle:SetChecked(ns.db.pinTarget)
     local soundName = "None"
     for _, s in ipairs(ns.SoundChoices()) do
         if s.key == ns.db.sound then soundName = s.label end
