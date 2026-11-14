@@ -22,9 +22,15 @@ local MAX_ROWS = ns.MAX_NPCS
 local SPEAKER = "Interface\\AddOns\\NpcSonar\\Media\\speaker"  -- from assets/make_speaker.py
 
 local frame, rowsArea, addBtn, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, badgeToggle, soundLabel, pingLabel, heightLabel, listLabel
+local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, badgeToggle, questLabel, soundLabel, pingLabel, heightLabel, listLabel
 local tiles = {}
 local rows = {}         -- row widgets, reused; rows[i] shows ns.db.npcs[i]
+
+local QUEST_MODE_LABELS = {
+    off  = "Off",
+    zone = "Quests in this zone",
+    all  = "All quests in the log",
+}
 local topHeight, lowerHeight
 
 local function Tooltip(widget, text)
@@ -585,6 +591,41 @@ local function Build()
         .. "Hidden, it still works from its keybind\n"
         .. "(Key Bindings > AddOns > NPC Sonar).")
 
+    -- Automatic quest scan: < mode > stepper over ns.QUEST_MODES, stopping at
+    -- the ends. Greyed out where quest scanning isn't supported.
+    local questCap = S.Caption(lower, "Scan for quest NPCs automatically")
+    questCap:SetPoint("TOPLEFT", 0, Row(14))
+
+    local questY = Row(26, 12)
+    local questLess = S.Button(lower, "<", 28, 26)
+    questLess:SetPoint("TOPLEFT", 0, questY)
+    local questMore = S.Button(lower, ">", 28, 26)
+    questMore:SetPoint("TOPRIGHT", 0, questY)
+    local questBox = CreateFrame("Frame", nil, lower, "BackdropTemplate")
+    questBox:SetPoint("TOPLEFT", questLess, "TOPRIGHT", 4, 0)
+    questBox:SetPoint("BOTTOMRIGHT", questMore, "BOTTOMLEFT", -4, 0)
+    S.Backdrop(questBox, C.panel)
+    questBox:EnableMouse(true)  -- for the tooltip
+    questLabel = S.Font(questBox, 12, C.text)
+    questLabel:SetPoint("CENTER")
+    Tooltip(questBox, "Scans for the NPCs your quests still need, without picking\n"
+        .. "each quest in the quest log. Keeps a scan running while there\n"
+        .. "are such quests; Stop pauses it until you start a scan again.\n"
+        .. "These quests only get a chat line when found, no alert sound.")
+    local supported = ns.QuestSupported and ns.QuestSupported()
+    questLess:SetEnabled(supported)
+    questMore:SetEnabled(supported)
+    local function QuestStep(delta)
+        local at = 1
+        for i, m in ipairs(ns.QUEST_MODES) do
+            if m == ns.db.questMode then at = i end
+        end
+        ns.SetQuestMode(ns.QUEST_MODES[math.max(1, math.min(#ns.QUEST_MODES, at + delta))])
+        ns.Refresh()
+    end
+    questLess:SetScript("OnClick", function() QuestStep(-1) end)
+    questMore:SetScript("OnClick", function() QuestStep(1) end)
+
     -- Default sound: < name > stepper. Every step plays the sound so you hear
     -- what you picked; clicking the name plays it again.
     local soundCap = S.Caption(lower, "Default sound")
@@ -721,7 +762,7 @@ local function Build()
 
     stopBtn = S.Button(frame, "Stop", half, 30, "secondary")
     stopBtn:SetPoint("BOTTOMRIGHT", -PAD, PAD)
-    stopBtn:SetScript("OnClick", function() ns.Stop() end)
+    stopBtn:SetScript("OnClick", function() ns.Stop(true) end)
 
     LayoutRows()
 end
@@ -762,6 +803,13 @@ function ns.Refresh()
     radarToggle:SetChecked(ns.db.radar)
     waypointToggle:SetChecked(ns.db.waypoint)
     badgeToggle:SetChecked(ns.db.badge)
+    if ns.QuestSupported and not ns.QuestSupported() then
+        questLabel:SetText("Needs a newer game client")
+        questLabel:SetTextColor(unpack(C.muted))
+    else
+        questLabel:SetText(QUEST_MODE_LABELS[ns.db.questMode] or ns.db.questMode)
+        questLabel:SetTextColor(unpack(ns.db.questMode == "off" and C.muted or C.text))
+    end
     UpdateListLabel()
     soundLabel:SetText(SoundLabel(ns.db.sound))
     soundLabel:SetTextColor(unpack(ns.db.sound == "NONE" and C.muted or C.text))

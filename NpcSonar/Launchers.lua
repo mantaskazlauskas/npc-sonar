@@ -28,7 +28,7 @@ local DEFAULT_ANGLE = 225   -- degrees, bottom-left of the minimap
 local function OnLauncherClick(mouseButton)
     if mouseButton == "RightButton" then
         if ns.scanning then
-            ns.Stop()
+            ns.Stop(true)
         elseif not ns.Start() then
             -- No name saved yet: open the window so there's somewhere to type
             -- one, instead of leaving only a chat message.

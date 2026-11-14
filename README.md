@@ -13,6 +13,7 @@ alerts you. It's meant for quests where the mob you need patrols.
 - `/npcsonar stop` and `/npcsonar start` stop and resume.
 - `/npcsonar minimap` hides or shows the minimap button.
 - `/npcsonar badge` hides or shows the sonar badge (also a setting in the window).
+- `/npcsonar quests off|zone|all` sets the automatic quest scan (also in the window).
 - **NPC rows:** each NPC has its own row. **+ Add NPC** adds one (up to 8) and
   **x** removes it. **Target** puts your current target's name in the first
   empty row.
@@ -134,6 +135,23 @@ under it is still open. So:
   current target.
 - The radar doesn't apply: minimap icons don't say which quest they belong to.
 - Clients without `C_TooltipInfo` (older Classic) don't get the button.
+
+### Automatic quest scan
+
+*Scan for quest NPCs automatically* in the window (or `/npcsonar quests
+off|zone|all`) scans for the NPCs of every quest in your log, or only the
+quests the game places on your current map, without clicking each one.
+
+- The set follows your quest log and zone: new quests join, finished or
+  abandoned ones leave.
+- It keeps a scan running while there are such quests, starting it by itself
+  (quests only; your NPC rows join when you start a scan yourself). **Stop**
+  pauses it until you start a scan again.
+- These quests are quiet: a chat line when one's NPC is first found, no raid
+  warning or sound. Click **Scan for NPCs** on one (it reads
+  **Auto-scanning**) to pick it and get the full alert.
+- The badge holds up to 8 learned names. Picked quests' names push out
+  automatic ones when it is full.
 
 ## Install
 

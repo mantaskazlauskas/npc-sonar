@@ -31,12 +31,16 @@ local DEFAULTS = {
     sound   = "RAID_WARNING",  -- a SOUNDKIT key, or "NONE"
     pingSize = 1,     -- ripple ring size, a multiple of the default (ns.PING_SIZES)
     markerOffset = 0, -- nameplate marker's height above its default spot, in px (ns.MARKER_OFFSETS)
+    questMode = "off", -- scan for quests in the log on its own: "off", "zone" or "all" (Quests.lua)
 }
 
 -- Steps offered in the window for the ripple size and the marker height. A
 -- saved value outside its list is reset to the default at load.
 ns.PING_SIZES = { 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5 }
 ns.MARKER_OFFSETS = { -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 40, 50, 60 }
+
+-- The automatic quest scan's choices, in the order the window steps through them.
+ns.QUEST_MODES = { "off", "zone", "all" }
 
 ns.ICON_NAMES = { "Star", "Circle", "Diamond", "Triangle", "Moon", "Square", "Cross", "Skull" }
 
@@ -169,6 +173,9 @@ function ns.ToggleQuest(_id) ns.Print("Quest scanning isn't available.") end
 function ns.QuestTitle(id) return "quest " .. tostring(id) end
 function ns.AddQuestTrackingLines(_tooltip, _onlyID) end
 function ns.QuestPassDone() end
+function ns.IsPickedQuest(_id) return true end
+function ns.PauseAutoQuests() end
+function ns.SetQuestMode(_mode) end
 
 ns.found = false  -- a match is in range right now; drives the badge colour
 
@@ -499,11 +506,19 @@ end
 -- A quest usually needs a pack of NPCs, so it is announced once per scan, for
 -- the first one found; the rest are only marked. Each name found for it is
 -- added to the badge macro.
+-- Quests the automatic mode added get a chat line only, with no raid
+-- warning, sound or cooldown, so a full quest log doesn't keep alerting.
 local alertedQuest = {}
 local function AlertQuest(name, want)
     if ns.LearnQuestName(name, want) then ns.UpdateMarkButton() end
     if alertedQuest[want] then return end
     local id = tonumber(want:match("%d+"))
+    if not ns.IsPickedQuest(id) then
+        ns.Print(("Found %s %s for |cffffd100%s|r"):format(
+            ns.IconString(ns.IconFor(want)), name, ns.QuestTitle(id)))
+        alertedQuest[want] = true
+        return
+    end
     if ns.Announce(("Found %s %s for |cffffd100%s|r"):format(
             ns.IconString(ns.IconFor(want)), name, ns.QuestTitle(id)), ns.SoundFor(want)) then
         alertedQuest[want] = true
@@ -665,10 +680,13 @@ end
 --------------------------------------------------------------------------------
 
 -- `text` (from /npcsonar <names>) replaces the rows; without it the rows in
--- the window are used.
-function ns.Start(text)
+-- the window are used. `questsOnly` (the automatic quest scan starting by
+-- itself) leaves the rows out, and warns about nameplate settings only on
+-- the first such start of the session.
+local warnedPlates = false
+function ns.Start(text, questsOnly)
     if text then ns.db.npcs = ns.ParseRows(text) end
-    wanted, wantedIcon, wantedSound = ReadRows(ns.db.npcs)
+    wanted, wantedIcon, wantedSound = ReadRows(questsOnly and {} or ns.db.npcs)
     ns.ResetQuests()
     wipe(alertedQuest)
     if #wanted == 0 and not ns.HasQuests() then
@@ -684,7 +702,8 @@ function ns.Start(text)
     if not ticker then ticker = C_Timer.NewTicker(SCAN_INTERVAL, Scan) end
     ns.UpdatePinning()
     ns.ResetRadar()
-    WarnIfPlatesOff()
+    if not (questsOnly and warnedPlates) then WarnIfPlatesOff() end
+    warnedPlates = true
     ns.SetStatus("Searching...")
     ns.Refresh()
     ns.UpdateMarkButton()
@@ -694,7 +713,11 @@ function ns.Start(text)
     return true
 end
 
-function ns.Stop()
+-- `byPlayer` is true when the player stopped it (Stop button, launcher,
+-- /npcsonar stop): the automatic quest scan then waits instead of starting
+-- again at once.
+function ns.Stop(byPlayer)
+    if byPlayer then ns.PauseAutoQuests() end
     ns.scanning = false
     if ticker then ticker:Cancel(); ticker = nil end
     ns.UpdatePinning()
@@ -772,6 +795,9 @@ events:SetScript("OnEvent", function(self, event, arg1)
         if NpcSonarDB.markerOffset ~= nil and not tContains(ns.MARKER_OFFSETS, NpcSonarDB.markerOffset) then
             NpcSonarDB.markerOffset = nil
         end
+        if NpcSonarDB.questMode ~= nil and not tContains(ns.QUEST_MODES, NpcSonarDB.questMode) then
+            NpcSonarDB.questMode = nil
+        end
         for k, v in pairs(DEFAULTS) do
             if NpcSonarDB[k] == nil then NpcSonarDB[k] = v end
         end
@@ -819,7 +845,7 @@ SlashCmdList.NPCSONAR = function(msg)
     elseif cmd == "" then
         ns.ToggleWindow()
     elseif cmd == "stop" then
-        ns.Stop()
+        ns.Stop(true)
     elseif cmd == "start" then
         ns.Start()
     elseif cmd == "minimap" then
@@ -828,6 +854,13 @@ SlashCmdList.NPCSONAR = function(msg)
         ns.ToggleBadge()
     elseif cmd == "debug" then
         ns.Debug()
+    elseif verb == "quests" then
+        local mode = rest:lower()
+        if tContains(ns.QUEST_MODES, mode) then
+            ns.SetQuestMode(mode)
+        else
+            ns.Print("Usage: /npcsonar quests off | zone | all")
+        end
     elseif cmd == "quest clear" then
         ns.ClearQuests()
     elseif verb == "quest" then
