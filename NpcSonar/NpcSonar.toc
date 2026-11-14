@@ -2,7 +2,7 @@
 ## Title: NPC Sonar
 ## Notes: Scans for NPCs by name, shows an icon over their nameplates, and gives you a one-click sonar badge that targets and marks them.
 ## Author: mmantas
-## Version: 1.2.0
+## Version: 1.3.0
 ## SavedVariables: NpcSonarDB
 ## Category: Quests
 ## IconTexture: Interface\AddOns\NpcSonar\Media\sonar_search
