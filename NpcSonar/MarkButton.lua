@@ -1,7 +1,8 @@
 --------------------------------------------------------------------------------
 -- NPC Sonar -- the sonar badge
 --
--- One small badge that is always on screen, so new players find it. While
+-- One small badge, on screen by default so new players find it (a setting
+-- hides it; its keybind still clicks it). While
 -- idle it sits still and slightly dimmed; while a scan runs its sonar scope
 -- sweeps round; when a match is in range the sweep stops, an orange contact
 -- appears and the border turns green. It is also the button that places the
@@ -229,7 +230,9 @@ local function Apply()
     -- starts the scan instead.
     btn:SetAttribute("*type1", ns.scanning and "macro" or nil)
     btn:SetAttribute("macrotext", ns.scanning and BuildMacro() or nil)
-    btn:Show()
+    -- Hidden by the setting, it still works: a key bound to it clicks it
+    -- whether it is shown or not.
+    btn:SetShown(ns.db.badge)
     ns.UpdateIndicator()  -- the dimming follows whether it still holds the macro
 end
 
@@ -244,6 +247,47 @@ function ns.UpdateMarkButton()
     end
     pending = false
     Apply()
+end
+
+-- The key bound to the badge, as the game displays it, or nil.
+local function BoundKey()
+    local key = GetBindingKey("CLICK NpcSonarMarkButton:LeftButton")
+    return key and GetBindingText(key)
+end
+
+-- Show or hide the badge. Like the macro, this waits for combat to end.
+-- Hiding it without a key bound leaves no way to mark, so say how to fix it.
+function ns.SetBadgeShown(on)
+    ns.db.badge = on
+    ns.UpdateMarkButton()
+    if InCombatLockdown() then
+        ns.Print(on and "The sonar badge will appear when combat ends."
+            or "The sonar badge will hide when combat ends.")
+    elseif on then
+        ns.Print("Sonar badge shown.")
+    elseif BoundKey() then
+        ns.Print(("Sonar badge hidden. %s still targets and marks. "
+            .. "Type /npcsonar badge to show it again."):format(BoundKey()))
+    else
+        ns.Print("Sonar badge hidden. Bind a key under Key Bindings > AddOns > "
+            .. "NPC Sonar to target and mark, or type /npcsonar badge to show it again.")
+    end
+    ns.Refresh()
+end
+
+function ns.ToggleBadge()
+    ns.SetBadgeShown(not ns.db.badge)
+end
+
+-- How the status line tells you to fire the macro: the badge when it is on
+-- screen, otherwise its key. Read at the time, so a key bound later counts.
+function ns.ClickHint()
+    if ns.db.badge then
+        return "Click the |cffffd100sonar badge|r (or your keybind)"
+    end
+    local key = BoundKey()
+    if key then return ("Press |cffffd100%s|r"):format(key) end
+    return "Bind a key under |cffffd100Key Bindings > AddOns > NPC Sonar|r"
 end
 
 --------------------------------------------------------------------------------

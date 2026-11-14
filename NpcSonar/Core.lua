@@ -25,6 +25,7 @@ local DEFAULTS = {
     pinTarget = true, -- while scanning, hold the target's plate at the screen edge (Pin.lua)
     friendlyPlates = true, -- while scanning, show friendly NPC nameplates so they can be found (Pin.lua)
     doneOnDeath = true, -- stop looking for a name once an NPC found under it dies
+    badge   = true,   -- show the sonar badge; its keybind works either way (MarkButton.lua)
     radar   = true,   -- detect matching rares on the minimap and point at them (Radar.lua)
     waypoint = true,  -- drop a map waypoint on rares the radar finds (Sightings.lua)
     sound   = "RAID_WARNING",  -- a SOUNDKIT key, or "NONE"
@@ -153,6 +154,8 @@ function ns.ResetRadar() end
 function ns.RadarStatus() return nil end
 function ns.RecordSighting(_name, _want, _guid) end
 function ns.ToggleMinimapButton() end
+function ns.ToggleBadge() end
+function ns.ClickHint() return "Click the |cffffd100sonar badge|r (or your keybind)" end
 function ns.QuestMatch(_unit) return nil end
 function ns.HasQuests() return false end
 function ns.IsQuestWant(_want) return false end
@@ -590,13 +593,13 @@ local function Scan()
     end
 
     if firstName then
-        ns.SetStatus(("|cff00ff00Found:|r %s %s\nClick the |cffffd100sonar badge|r (or your keybind) to target it and set a raid marker.")
-            :format(ns.IconString(ns.IconFor(firstWant)), firstName))
+        ns.SetStatus(("|cff00ff00Found:|r %s %s\n%s to target it and set a raid marker.")
+            :format(ns.IconString(ns.IconFor(firstWant)), firstName, ns.ClickHint()))
     elseif sawHidden then
         -- The secure macro runs in Blizzard code, which can still read names,
         -- so the button keeps working where the scan has gone blind.
         ns.SetStatus("|cffff8000NPC names are hidden from addons here,|r so no auto-detect. "
-            .. "Clicking the |cffffd100sonar badge|r still finds and marks the NPC.")
+            .. ns.ClickHint() .. " to find and mark the NPC anyway.")
     else
         ns.SetStatus(ns.RadarStatus() or "Searching...")
     end
@@ -821,6 +824,8 @@ SlashCmdList.NPCSONAR = function(msg)
         ns.Start()
     elseif cmd == "minimap" then
         ns.ToggleMinimapButton()
+    elseif cmd == "badge" then
+        ns.ToggleBadge()
     elseif cmd == "debug" then
         ns.Debug()
     elseif cmd == "quest clear" then

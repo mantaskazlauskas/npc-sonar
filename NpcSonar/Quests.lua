@@ -378,8 +378,8 @@ local function MakeButton(parent, getQuestID)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText("NPC Sonar")
         GameTooltip:AddLine("Marks the NPCs this quest still needs on their nameplates\n"
-            .. "and alerts you when one is near. Click the sonar badge\n"
-            .. "to target one and put a raid marker on it.", 1, 1, 1, true)
+            .. "and alerts you when one is near.\n" .. ns.ClickHint()
+            .. "\nto target one and put a raid marker on it.", 1, 1, 1, true)
         local id = getQuestID()
         if id and ns.IsTrackingQuest(id) then ns.AddQuestTrackingLines(GameTooltip, id) end
         GameTooltip:Show()

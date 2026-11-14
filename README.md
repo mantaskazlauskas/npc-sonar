@@ -12,6 +12,7 @@ alerts you. It's meant for quests where the mob you need patrols.
 - `/npcsonar <name>` starts scanning for that name. Separate several names with commas.
 - `/npcsonar stop` and `/npcsonar start` stop and resume.
 - `/npcsonar minimap` hides or shows the minimap button.
+- `/npcsonar badge` hides or shows the sonar badge (also a setting in the window).
 - **NPC rows:** each NPC has its own row. **+ Add NPC** adds one (up to 8) and
   **x** removes it. **Target** puts your current target's name in the first
   empty row.
@@ -61,7 +62,8 @@ available to the Blizzard UI" popup. So marking works in two parts:
 1. **Nameplate icon (automatic, only you see it).** Every living match gets
    the chosen icon drawn above its nameplate.
 2. **The sonar badge (one click, everyone sees the marker).** A small sonar
-   badge is always on screen. While idle it sits still and slightly dimmed;
+   badge is on screen (hide it with *Show the sonar badge* in the window;
+   its keybind keeps working). While idle it sits still and slightly dimmed;
    while scanning its sweep turns; when a match is in range the sweep stops,
    an orange contact appears and the border turns green. The corner shows
    the marker a click will place.

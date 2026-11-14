@@ -22,7 +22,7 @@ local MAX_ROWS = ns.MAX_NPCS
 local SPEAKER = "Interface\\AddOns\\NpcSonar\\Media\\speaker"  -- from assets/make_speaker.py
 
 local frame, rowsArea, addBtn, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, soundLabel, pingLabel, heightLabel, listLabel
+local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, badgeToggle, soundLabel, pingLabel, heightLabel, listLabel
 local tiles = {}
 local rows = {}         -- row widgets, reused; rows[i] shows ns.db.npcs[i]
 local topHeight, lowerHeight
@@ -573,9 +573,17 @@ local function Build()
     waypointToggle = S.Toggle(lower, "Set a map waypoint on rares it finds", function(on)
         ns.db.waypoint = on
     end)
-    waypointToggle:SetPoint("TOPLEFT", 0, Row(18, 12))
+    waypointToggle:SetPoint("TOPLEFT", 0, Row(18, 6))
     Tooltip(waypointToggle, "When the radar detects a match, put a map waypoint on it.\n"
         .. "A waypoint you placed yourself is left alone.")
+
+    badgeToggle = S.Toggle(lower, "Show the sonar badge", function(on)
+        ns.SetBadgeShown(on)
+    end)
+    badgeToggle:SetPoint("TOPLEFT", 0, Row(18, 12))
+    Tooltip(badgeToggle, "The small on-screen button that targets and marks the NPC.\n"
+        .. "Hidden, it still works from its keybind\n"
+        .. "(Key Bindings > AddOns > NPC Sonar).")
 
     -- Default sound: < name > stepper. Every step plays the sound so you hear
     -- what you picked; clicking the name plays it again.
@@ -753,6 +761,7 @@ function ns.Refresh()
     deathToggle:SetChecked(ns.db.doneOnDeath)
     radarToggle:SetChecked(ns.db.radar)
     waypointToggle:SetChecked(ns.db.waypoint)
+    badgeToggle:SetChecked(ns.db.badge)
     UpdateListLabel()
     soundLabel:SetText(SoundLabel(ns.db.sound))
     soundLabel:SetTextColor(unpack(ns.db.sound == "NONE" and C.muted or C.text))

@@ -10,7 +10,7 @@
 - **A marker and sound per NPC.** Every NPC row has its own marker and alert sound button, so the skull rare and the star rare look and sound different, with matching ring colours and raid markers. Leave them on Default to use the shared choice.
 - **Spots rares from far away.** Rares and other special NPCs show on your minimap long before they get a nameplate. When one matches, you're alerted, an arrow on screen points at it with the distance and a small model of the NPC with its name and level, and a map waypoint is dropped on it. Made for Retail; on Classic it works only where the game shows such icons on the minimap.
 - **Alerts you.** When a match appears, you get a chat message, an on-screen raid-warning message, a sound and a flashing taskbar icon if the game is in the background, once per NPC per scan. Pick the sound from the game's own alert sounds, or turn it off.
-- **Targets and marks in one click.** A small sonar badge is always on your screen. Click it to start scanning; its sweep turns while it searches. When your NPC is in range, the sweep stops, an orange contact lights up and the border turns green. Click it to target the NPC and place a real raid marker that your group can see. On clients with the ping system (Retail), it also pings it: attack on enemies, assist on friendly NPCs. You can bind it to a key or controller button.
+- **Targets and marks in one click.** A small sonar badge sits on your screen (you can hide it in the settings). Click it to start scanning; its sweep turns while it searches. When your NPC is in range, the sweep stops, an orange contact lights up and the border turns green. Click it to target the NPC and place a real raid marker that your group can see. On clients with the ping system (Retail), it also pings it: attack on enemies, assist on friendly NPCs. You can bind it to a key or controller button.
 - **Keeps your target in view.** While scanning, your target's nameplate stays at the edge of the screen when it's behind you or off to the side (on Classic clients, all nameplates do). Your own nameplate settings are put back when the scan stops.
 - **Knows when you're done.** Once a found NPC dies, its name is dropped from the scan, and the scan stops when every name is done. Turn this off to keep finding more mobs with the same name. Corpses never trigger alerts.
 - **Saved lists.** Save a set of NPCs with their markers and sounds ("Daily rares", "Profession trainers") and load it again with one click.
@@ -35,6 +35,7 @@ The screen-edge, friendly-nameplate, radar, waypoint and stop-when-dead behaviou
 | `/npcsonar quest <questID>` | Start or stop scanning for a quest's NPCs |
 | `/npcsonar quest clear` | Stop scanning for every quest |
 | `/npcsonar minimap` | Hide or show the minimap button |
+| `/npcsonar badge` | Hide or show the sonar badge |
 | `/npcsonar save <list>` / `load <list>` / `delete <list>` | Save, load or delete a list of names |
 | `/npcsonar lists` | Print your saved lists |
 | `/npcsonar log` | Print where each name was last seen |
@@ -42,7 +43,7 @@ The screen-edge, friendly-nameplate, radar, waypoint and stop-when-dead behaviou
 | `/npcsonar share` | Post the latest sighting to your group, or guild if solo |
 | `/npcsonar debug` | Print what the addon can see, for bug reports |
 
-**Badge controls:** left-click targets and marks. Right-click opens the window. Right-drag moves the badge.
+**Badge controls:** left-click targets and marks. Right-click opens the window. Right-drag moves the badge. Don't want it on screen? Untick *Show the sonar badge* in the window; its keybind keeps working.
 **Minimap button:** left-click opens the window, and right-click starts or stops the scan. Drag it around the minimap edge to move it. It works with minimap button collectors, and it's also listed in Blizzard's addons button where the game has one.
 **Keybinding:** *Key Bindings → AddOns → NPC Sonar*.
 
