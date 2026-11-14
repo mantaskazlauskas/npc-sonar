@@ -2,9 +2,13 @@
 
 **Stop hunting for that one patrolling quest mob.** Type its name, or pick a quest from your quest log, and start a scan. NPC Sonar keeps sweeping the area around you and alerts you the moment your target comes into view. It also marks it, so you can spot it in a crowd.
 
+## See it in action
+
+<iframe src="https://www.youtube.com/embed/ztPH3dtXoxQ" width="560" height="314" allowfullscreen="allowfullscreen"></iframe>
+
 ## What it does
 
-- **Finds a quest's NPCs for you.** Open a quest in your quest log and click **Scan for NPCs**. No names to type: NPC Sonar marks the NPCs that quest still needs, drops the ones you're done with as objectives complete, and stops when the quest is finished. Hover the badge to see which NPCs it's tracking.
+- **Finds a quest's NPCs for you.** Open a quest in your quest log and click **Scan for NPCs**. No names to type: NPC Sonar marks the NPCs that quest still needs, drops the ones you're done with as objectives complete, and stops when the quest is finished. Hover the badge to see which NPCs it's tracking. Or let it scan for every quest in your log, or just the ones in your current zone, on its own.
 - **Finds NPCs by name.** Enter a name, and click **+ Add NPC** for each extra one (up to 8). Turn on partial matching and `ashar` will find "Shade of Ashar". Or target the NPC once and click **Target** to add its name.
 - **Marks them on your screen.** Every matching NPC gets your chosen raid icon (skull, cross, moon and so on) floating over its nameplate, with sonar rings pinging out behind it. Only you see it, and it updates live as mobs come and go. You can make the rings bigger or smaller and move the marker up or down, so it clears buffs and debuffs shown above the nameplate.
 - **A marker and sound per NPC.** Every NPC row has its own marker and alert sound button, so the skull rare and the star rare look and sound different, with matching ring colours and raid markers. Leave them on Default to use the shared choice.
@@ -25,6 +29,20 @@ The screen-edge, friendly-nameplate, radar, waypoint and stop-when-dead behaviou
    For a quest, open it in your quest log and click **Scan for NPCs** instead.
 3. Keep moving. When the badge turns green, click it, or press your keybind.
 
+## Example: marking a quest's NPCs
+
+Say a quest asks you to speak with three villagers somewhere in a busy town, and you don't know what they look like.
+
+1. Open the quest in your quest log and click **Scan for NPCs**. On Retail it's on the quest's details page, next to the Back button; on Classic, at the top right of the quest log.
+2. Walk through the town. Each villager the quest still needs gets your marker over their nameplate, with sonar rings pinging behind it. The first one found sends an alert, and chat says which NPC it's tracking.
+3. Speak with a villager and their marker goes away, because that part of the quest is done. The ones you still need stay marked.
+4. Want a real raid marker your group can see? Click the badge (or press your keybind) to target one of the villagers it has found and mark it.
+5. Once the quest's objectives are done, NPC Sonar stops scanning for it, and stops the scan if there's nothing else to look for.
+
+Kill quests work the same way: the mobs you still need are marked, and the markers go away once you've killed enough.
+
+Don't want to click each quest? Set **Scan for quest NPCs automatically** in the window to *Quests in this zone* or *All quests in the log*. NPC Sonar then marks the NPCs of all those quests as you go, with one chat line per quest when it first finds one. Quests you click **Scan for NPCs** on still get the full alert.
+
 ## Commands
 
 | Command | What it does |
@@ -33,7 +51,8 @@ The screen-edge, friendly-nameplate, radar, waypoint and stop-when-dead behaviou
 | `/npcsonar <name>` | Start scanning for a name right away |
 | `/npcsonar stop` / `/npcsonar start` | Stop or resume the scan |
 | `/npcsonar quest <questID>` | Start or stop scanning for a quest's NPCs |
-| `/npcsonar quest clear` | Stop scanning for every quest |
+| `/npcsonar quest clear` | Stop scanning for every quest you picked |
+| `/npcsonar quests off` / `zone` / `all` | Scan for quest NPCs automatically: off, quests in this zone, or every quest in your log |
 | `/npcsonar minimap` | Hide or show the minimap button |
 | `/npcsonar badge` | Hide or show the sonar badge |
 | `/npcsonar save <list>` / `load <list>` / `delete <list>` | Save, load or delete a list of names |
