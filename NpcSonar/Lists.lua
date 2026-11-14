@@ -43,7 +43,7 @@ function ns.SaveList(name)
         ns.Print("Give the list a name.")
         return
     end
-    if ns.NamesText() == "" then
+    if ns.NamesText(ns.db.npcs) == "" then
         ns.Print("Enter some NPC names first.")
         return
     end
@@ -64,7 +64,7 @@ function ns.LoadList(name)
     end
     -- Names typed but never saved would be lost; print them so they can be
     -- copied back from chat.
-    local typed = ns.NamesText()
+    local typed = ns.NamesText(ns.db.npcs)
     if typed ~= "" and not ns.ShownList() then
         ns.Print("Replaced unsaved names: " .. typed)
     end
@@ -183,7 +183,7 @@ function ns.ConfirmDeleteList(name)
 end
 
 function ns.PromptSaveList()
-    if ns.NamesText() == "" then
+    if ns.NamesText(ns.db.npcs) == "" then
         ns.Print("Enter some NPC names first.")
         return
     end

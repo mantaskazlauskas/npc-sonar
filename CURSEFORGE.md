@@ -1,26 +1,28 @@
 # NPC Sonar
 
-**Stop hunting for that one patrolling quest mob.** Type its name and start a scan. NPC Sonar keeps sweeping the area around you and alerts you the moment your target comes into view. It also marks it, so you can spot it in a crowd.
+**Stop hunting for that one patrolling quest mob.** Type its name, or pick a quest from your quest log, and start a scan. NPC Sonar keeps sweeping the area around you and alerts you the moment your target comes into view. It also marks it, so you can spot it in a crowd.
 
 ## What it does
 
+- **Finds a quest's NPCs for you.** Open a quest in your quest log and click **Scan for NPCs**. No names to type: NPC Sonar marks the NPCs that quest still needs, drops the ones you're done with as objectives complete, and stops when the quest is finished. Hover the badge to see which NPCs it's tracking.
 - **Finds NPCs by name.** Enter a name, and click **+ Add NPC** for each extra one (up to 8). Turn on partial matching and `ashar` will find "Shade of Ashar". Or target the NPC once and click **Target** to add its name.
-- **Marks them on your screen.** Every matching NPC gets your chosen raid icon (skull, cross, moon and so on) floating over its nameplate, with sonar rings pinging out behind it. Only you see it, and it updates live as mobs come and go.
+- **Marks them on your screen.** Every matching NPC gets your chosen raid icon (skull, cross, moon and so on) floating over its nameplate, with sonar rings pinging out behind it. Only you see it, and it updates live as mobs come and go. You can make the rings bigger or smaller and move the marker up or down, so it clears buffs and debuffs shown above the nameplate.
 - **A marker and sound per NPC.** Every NPC row has its own marker and alert sound button, so the skull rare and the star rare look and sound different, with matching ring colours and raid markers. Leave them on Default to use the shared choice.
 - **Spots rares from far away.** Rares and other special NPCs show on your minimap long before they get a nameplate. When one matches, you're alerted, an arrow on screen points at it with the distance and a small model of the NPC with its name and level, and a map waypoint is dropped on it. Made for Retail; on Classic it works only where the game shows such icons on the minimap.
 - **Alerts you.** When a match appears, you get a chat message, an on-screen raid-warning message, a sound and a flashing taskbar icon if the game is in the background, once per NPC per scan. Pick the sound from the game's own alert sounds, or turn it off.
-- **Targets and marks in one click.** A small sonar badge is always on your screen. Click it to start scanning; its sweep turns while it searches. When your NPC is in range, the sweep stops, an orange contact lights up and the border turns green. Click it to target the NPC and place a real raid marker that your group can see. On clients with the ping system (Retail), it also pings it. You can bind it to a key or controller button.
+- **Targets and marks in one click.** A small sonar badge is always on your screen. Click it to start scanning; its sweep turns while it searches. When your NPC is in range, the sweep stops, an orange contact lights up and the border turns green. Click it to target the NPC and place a real raid marker that your group can see. On clients with the ping system (Retail), it also pings it: attack on enemies, assist on friendly NPCs. You can bind it to a key or controller button.
 - **Keeps your target in view.** While scanning, your target's nameplate stays at the edge of the screen when it's behind you or off to the side (on Classic clients, all nameplates do). Your own nameplate settings are put back when the scan stops.
 - **Knows when you're done.** Once a found NPC dies, its name is dropped from the scan, and the scan stops when every name is done. Turn this off to keep finding more mobs with the same name. Corpses never trigger alerts.
-
-The screen-edge, radar, waypoint and stop-when-dead behaviours are all options in the window, on by default.
 - **Saved lists.** Save a set of NPCs with their markers and sounds ("Daily rares", "Profession trainers") and load it again with one click.
 - **Remembers sightings.** NPC Sonar keeps where and when each name was last seen. Put a waypoint on the latest one, share it with your group or guild, or print the log.
+
+The screen-edge, friendly-nameplate, radar, waypoint and stop-when-dead behaviours are all options in the window, on by default.
 
 ## How to use
 
 1. Type `/npcsonar` to open the window.
 2. Enter the NPC's name (and **+ Add NPC** for more), pick markers and sounds if you like, and press **Start scan**. If you change the names later, press **Restart scan** to search for the new ones.
+   For a quest, open it in your quest log and click **Scan for NPCs** instead.
 3. Keep moving. When the badge turns green, click it, or press your keybind.
 
 ## Commands
@@ -30,6 +32,8 @@ The screen-edge, radar, waypoint and stop-when-dead behaviours are all options i
 | `/npcsonar` (or `/npcd`) | Open or close the window |
 | `/npcsonar <name>` | Start scanning for a name right away |
 | `/npcsonar stop` / `/npcsonar start` | Stop or resume the scan |
+| `/npcsonar quest <questID>` | Start or stop scanning for a quest's NPCs |
+| `/npcsonar quest clear` | Stop scanning for every quest |
 | `/npcsonar minimap` | Hide or show the minimap button |
 | `/npcsonar save <list>` / `load <list>` / `delete <list>` | Save, load or delete a list of names |
 | `/npcsonar lists` | Print your saved lists |
@@ -45,6 +49,7 @@ The screen-edge, radar, waypoint and stop-when-dead behaviours are all options i
 ## Good to know
 
 - **Range:** NPC Sonar finds NPCs once they're within nameplate range (roughly 40–60 yards) or under your mouse. Rares and other NPCs with a minimap icon are found from much further away. It doesn't search the whole zone.
+- **Quests:** the quest must be in your quest log, since that's how the game knows which NPCs belong to it. The badge learns each quest NPC's name once it has been seen, so the scan has to find one before a click can target it. Needs a client with the modern tooltip system (Retail and newer Classic clients).
 - **Waypoints:** a waypoint you placed yourself is never replaced automatically.
 - **Nameplates:** turn on **enemy nameplates** (press V). Friendly NPC nameplates are off by default in WoW, so NPC Sonar turns them on while it scans (an option in the window) and puts your setting back afterwards.
 - **Raid groups:** placing a raid marker needs raid leader or assist. In a party or solo, anyone can mark.

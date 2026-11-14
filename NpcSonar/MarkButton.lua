@@ -137,8 +137,14 @@ btn:SetScript("OnEnter", function(self)
         GameTooltip:AddLine("Left-click: start scanning", 0.7, 0.7, 0.7)
     else
         GameTooltip:SetText(ns.found and "NPC Sonar: found" or "NPC Sonar: scanning")
-        GameTooltip:AddLine(ns.NamesText(), 1, 1, 1, true)
+        -- Names from the rows here; quests get their own block below.
+        local names = ns.NamesText(ns.db.npcs)
+        if names ~= "" then GameTooltip:AddLine(names, 1, 1, 1, true) end
         GameTooltip:AddLine("Left-click: target & mark it", 0.7, 0.7, 0.7)
+        if ns.HasQuests() then
+            ns.AddQuestTrackingLines(GameTooltip)
+            GameTooltip:AddLine(" ")
+        end
     end
     GameTooltip:AddLine("Right-click: open window. Right-drag: move.", 0.7, 0.7, 0.7)
     GameTooltip:AddLine("Bind a key under Key Bindings > AddOns.", 0.7, 0.7, 0.7)
@@ -165,9 +171,14 @@ local pending = false
 -- you targeting the first-listed name that is around.
 local function BuildMacro()
     local cmd = ns.db.partial and "/target " or "/targetexact "
-    local names = ns.WantedNames()
+    local names = ns.MacroNames()
     local lines
-    if ns.HasNameIcons() then
+    if #names == 0 then
+        -- Only quests are tracked and none of their NPCs has been seen yet:
+        -- nothing to target by name, so mark whatever you have targeted
+        -- rather than clearing it.
+        lines = { "/tm [@target,exists,nodead] " .. ns.db.icon }
+    elseif ns.HasNameIcons() then
         lines = {}
         for i = #names, 1, -1 do
             lines[#lines + 1] = "/cleartarget"
@@ -178,9 +189,16 @@ local function BuildMacro()
             lines[#lines + 1] = cmd .. names[i]
         end
     else
+        -- The last /target line that matches wins, so names found for quests
+        -- (after the wanted names in `names`) go first: a named rare nearby
+        -- beats a quest mob.
         lines = { "/cleartarget" }
-        for _, name in ipairs(names) do
-            lines[#lines + 1] = cmd .. name
+        local rows = #ns.WantedNames()
+        for i = rows + 1, #names do
+            lines[#lines + 1] = cmd .. names[i]
+        end
+        for i = 1, rows do
+            lines[#lines + 1] = cmd .. names[i]
         end
         lines[#lines + 1] = "/tm [exists,nodead] " .. ns.db.icon
     end
@@ -218,7 +236,7 @@ end
 function ns.UpdateMarkButton()
     -- The corner shows what a click marks: with per-name markers, the
     -- first-listed name's, since that is the target a click leaves you on.
-    local first = ns.WantedNames()[1]
+    local first = ns.MacroNames()[1]
     marker:SetTexture(ns.IconPath(first and ns.IconFor(first) or ns.db.icon))
     if InCombatLockdown() then
         pending = true

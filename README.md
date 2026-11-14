@@ -107,7 +107,31 @@ It checks every 0.3 s and also whenever a nameplate appears. This means:
   game's own secure code, which can still read names.
 - `/npcsonar debug` prints what the addon can see: client version, whether you're in
   an instance, whether pings exist, and the name, nameplate and match result
-  for your target, mouseover and any matching nameplates.
+  for your target, mouseover and any matching nameplates. For a targeted NPC
+  it also prints the quest lines the game attaches to it (see below).
+
+## Quest NPCs
+
+Open a quest in the quest log and click **Scan for NPCs** to scan for the
+NPCs that quest still needs, without typing any names. Click it again
+(**Stop NPC scan**) to stop. `/npcsonar quest <questID>` does the same, and
+`/npcsonar quest clear` stops every quest.
+
+No API lists a quest's NPCs, but the game knows which units belong to the
+quests in your log (that is what puts quest lines in a unit's tooltip).
+The scan reads those tooltip lines (`C_TooltipInfo.GetUnit`) and marks a unit
+when it carries the quest's title line and at least one of its objectives
+under it is still open. So:
+
+- The quest must be in your quest log. A quest stops being scanned for once
+  its objectives are done, or when it leaves the log.
+- The quest is announced once per scan, for the first NPC found; the rest are
+  marked without alerts.
+- The sonar badge targets by name, so it learns the names of the quest's NPCs
+  as the scan finds them. Until one has been seen, a click only marks your
+  current target.
+- The radar doesn't apply: minimap icons don't say which quest they belong to.
+- Clients without `C_TooltipInfo` (older Classic) don't get the button.
 
 ## Install
 

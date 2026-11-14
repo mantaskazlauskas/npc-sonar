@@ -153,6 +153,19 @@ function ns.ResetRadar() end
 function ns.RadarStatus() return nil end
 function ns.RecordSighting(_name, _want, _guid) end
 function ns.ToggleMinimapButton() end
+function ns.QuestMatch(_unit) return nil end
+function ns.HasQuests() return false end
+function ns.IsQuestWant(_want) return false end
+function ns.QuestNames() return {} end
+function ns.QuestTitlesText() return "" end
+function ns.LearnQuestName(_name, _want) return false end
+function ns.ResetQuests() end
+function ns.QuestDebug(_unit) end
+function ns.ClearQuests() end
+function ns.ToggleQuest(_id) ns.Print("Quest scanning isn't available.") end
+function ns.QuestTitle(id) return "quest " .. tostring(id) end
+function ns.AddQuestTrackingLines(_tooltip, _onlyID) end
+function ns.QuestPassDone() end
 
 ns.found = false  -- a match is in range right now; drives the badge colour
 
@@ -220,11 +233,16 @@ local function FilledRows(rows)
     return out
 end
 
--- "Grimtooth, Shade of Ashar", for tooltips and chat.
+-- "Grimtooth, Shade of Ashar", for tooltips and chat. Without `rows` it is
+-- what a scan looks for: the window's rows plus tracked quests (Quests.lua).
 function ns.NamesText(rows)
     local names = {}
     for _, r in ipairs(FilledRows(rows or ns.db.npcs)) do
         names[#names + 1] = (ParsePart(r.name))
+    end
+    if not rows then
+        local quests = ns.QuestTitlesText()
+        if quests ~= "" then names[#names + 1] = quests end
     end
     return table.concat(names, ", ")
 end
@@ -259,6 +277,17 @@ end
 
 function ns.WantedNames()
     return wanted
+end
+
+-- The names the badge macro targets: the wanted names, then names found for
+-- tracked quests (Quests.lua).
+function ns.MacroNames()
+    local names = {}
+    for _, n in ipairs(wanted) do names[#names + 1] = n end
+    for _, n in ipairs(ns.QuestNames()) do
+        if not tContains(names, n:lower()) then names[#names + 1] = n end
+    end
+    return names
 end
 
 -- The marker for a wanted entry: its own, else the chosen default.
@@ -304,7 +333,7 @@ local function Match(unit)
     local name = raw
     if type(name) ~= "string" then return nil end
 
-    local want = WantedFor(name)
+    local want = WantedFor(name) or ns.QuestMatch(unit)
     if want then return name, want end
     return nil
 end
@@ -464,7 +493,27 @@ function ns.Announce(msg, sound)
     return true
 end
 
+-- A quest usually needs a pack of NPCs, so it is announced once per scan, for
+-- the first one found; the rest are only marked. Each name found for it is
+-- added to the badge macro.
+local alertedQuest = {}
+local function AlertQuest(name, want)
+    if ns.LearnQuestName(name, want) then ns.UpdateMarkButton() end
+    if alertedQuest[want] then return end
+    local id = tonumber(want:match("%d+"))
+    if ns.Announce(("Found %s %s for |cffffd100%s|r"):format(
+            ns.IconString(ns.IconFor(want)), name, ns.QuestTitle(id)), ns.SoundFor(want)) then
+        alertedQuest[want] = true
+    end
+end
+
+-- Lets a quest tracked again during the same scan be announced again.
+function ns.ForgetQuestAlert(want)
+    if want then alertedQuest[want] = nil else wipe(alertedQuest) end
+end
+
 local function Alert(unit, name, want)
+    if ns.IsQuestWant(want) then return AlertQuest(name, want) end
     local guid = Clean(UnitGUID(unit))
     if guid and alerted[guid] then return end
     if not ns.Announce(("Found %s %s"):format(ns.IconString(ns.IconFor(want)), name),
@@ -497,12 +546,16 @@ local function CheckDeath(unit)
     wantedSound[want] = nil
     local name = Clean(UnitName(unit))
     name = type(name) == "string" and name or want
-    if #wanted == 0 then
+    if #wanted == 0 and not ns.HasQuests() then
         ns.Print(("%s is dead. Nothing left to look for, scan stopped."):format(name))
         ns.Stop()
         return true
     end
-    ns.Print(("%s is dead. Still looking for: %s"):format(name, table.concat(wanted, ", ")))
+    if #wanted == 0 then
+        ns.Print(("%s is dead. Still looking for quest NPCs."):format(name))
+    else
+        ns.Print(("%s is dead. Still looking for: %s"):format(name, table.concat(wanted, ", ")))
+    end
     ns.UpdateMarkButton()
     ns.RadarScan()
     return false
@@ -518,13 +571,16 @@ local function Scan()
         if name then
             if not firstName then firstName, firstWant = name, want end
             if PLATE_UNITS[unit] then ShowOverlay(unit, want) end
-            ns.NoteUnit(unit)
+            -- Level and model info is kept for named rares; quest packs would
+            -- only fill the saved variables.
+            if not ns.IsQuestWant(want) then ns.NoteUnit(unit) end
             Alert(unit, name, want)
         elseif want then
             sawHidden = true
         end
     end
     HideOverlays(true)
+    ns.QuestPassDone()
     ns.RadarTick()
 
     local found = firstName ~= nil
@@ -586,6 +642,7 @@ function ns.Debug()
         end
     end
     if not any then ns.Print("No target, mouseover or relevant nameplates. Target the NPC and run it again.") end
+    if Clean(UnitExists("target")) and not Clean(UnitIsPlayer("target")) then ns.QuestDebug("target") end
 end
 
 -- Enemy plates are the player's call (V toggles them), so they only get a
@@ -609,7 +666,9 @@ end
 function ns.Start(text)
     if text then ns.db.npcs = ns.ParseRows(text) end
     wanted, wantedIcon, wantedSound = ReadRows(ns.db.npcs)
-    if #wanted == 0 then
+    ns.ResetQuests()
+    wipe(alertedQuest)
+    if #wanted == 0 and not ns.HasQuests() then
         ns.Print("Enter an NPC name first.")
         ns.SetStatus("Enter an NPC name first.")
         return false
@@ -764,6 +823,14 @@ SlashCmdList.NPCSONAR = function(msg)
         ns.ToggleMinimapButton()
     elseif cmd == "debug" then
         ns.Debug()
+    elseif cmd == "quest clear" then
+        ns.ClearQuests()
+    elseif verb == "quest" then
+        if tonumber(rest) then
+            ns.ToggleQuest(tonumber(rest))
+        else
+            ns.Print("Usage: /npcsonar quest <questID>, or /npcsonar quest clear")
+        end
     else
         ns.Start(msg)
     end
