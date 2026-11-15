@@ -78,8 +78,9 @@ available to the Blizzard UI" popup. So marking works in two parts:
      name is set). While scanning it targets the NPC and puts a real raid
      marker on it. On clients that have the ping system (retail), it also
      pings it: **attack** on enemies, **assist** on friendly NPCs and
-     **warning** on anything else. You can bind this to a key or controller
-     button under *Key Bindings → AddOns → NPC Sonar*.
+     **warning** on anything else. You can bind this to a key: click
+     **Badge key** in the window and press the key (right-click it to clear).
+     For a controller or mouse button, use *Key Bindings → NPC Sonar*.
    - **Right-click** opens or closes the window.
    - **Right-drag** moves the badge.
 

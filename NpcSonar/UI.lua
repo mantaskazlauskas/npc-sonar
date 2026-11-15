@@ -22,9 +22,11 @@ local MAX_ROWS = ns.MAX_NPCS
 local SPEAKER = "Interface\\AddOns\\NpcSonar\\Media\\speaker"  -- from assets/make_speaker.py
 
 local frame, rowsArea, addBtn, startBtn, stopBtn, statusText, stateText, stateDot
-local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, badgeToggle, questLabel, soundLabel, pingLabel, heightLabel, listLabel
+local partialToggle, friendlyToggle, pinToggle, deathToggle, radarToggle, waypointToggle, badgeToggle, keyBtn, questLabel, soundLabel, pingLabel, heightLabel, listLabel
 local tiles = {}
 local rows = {}         -- row widgets, reused; rows[i] shows ns.db.npcs[i]
+
+local keyCapturing = false  -- the Badge key button is waiting for a key press
 
 local QUEST_MODE_LABELS = {
     off  = "Off",
@@ -586,10 +588,55 @@ local function Build()
     badgeToggle = S.Toggle(lower, "Show the sonar badge", function(on)
         ns.SetBadgeShown(on)
     end)
-    badgeToggle:SetPoint("TOPLEFT", 0, Row(18, 12))
+    badgeToggle:SetPoint("TOPLEFT", 0, Row(18, 8))
     Tooltip(badgeToggle, "The small on-screen button that targets and marks the NPC.\n"
-        .. "Hidden, it still works from its keybind\n"
-        .. "(Key Bindings > AddOns > NPC Sonar).")
+        .. "Hidden, it still works from its Badge key.")
+
+    -- Badge key: click, then press the key to bind (Esc cancels); right-click
+    -- clears it. The same binding as Key Bindings > NPC Sonar.
+    -- While waiting, the button takes keyboard input and doesn't pass it on,
+    -- so the key isn't also used by the game.
+    keyBtn = S.Button(lower, "", WIDTH - PAD * 2, 26)
+    keyBtn:SetPoint("TOPLEFT", 0, Row(26, 12))
+    keyBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    local MODIFIER_KEYS = {
+        LSHIFT = true, RSHIFT = true, LCTRL = true, RCTRL = true,
+        LALT = true, RALT = true, LMETA = true, RMETA = true,
+    }
+    local function EndCapture()
+        if not keyCapturing then return end
+        keyCapturing = false
+        keyBtn:SetScript("OnKeyDown", nil)
+        keyBtn:EnableKeyboard(false)
+        ns.Refresh()
+    end
+    keyBtn:SetScript("OnClick", function(self, button)
+        if keyCapturing then EndCapture(); return end
+        if button == "RightButton" then ns.ClearBadgeKey(); return end
+        if InCombatLockdown() then
+            ns.Print("Key bindings can't be changed in combat.")
+            return
+        end
+        keyCapturing = true
+        self:SetLabel("Press a key (Esc cancels)")
+        self:EnableKeyboard(true)
+        self:SetPropagateKeyboardInput(false)
+        self:SetScript("OnKeyDown", function(_, key)
+            if MODIFIER_KEYS[key] then return end  -- wait for the key itself
+            if key ~= "ESCAPE" then
+                local mods = (IsAltKeyDown() and "ALT-" or "")
+                    .. (IsControlKeyDown() and "CTRL-" or "")
+                    .. (IsShiftKeyDown() and "SHIFT-" or "")
+                    .. ((IsMetaKeyDown and IsMetaKeyDown()) and "META-" or "")
+                ns.SetBadgeKey(mods .. key)
+            end
+            EndCapture()
+        end)
+    end)
+    keyBtn:SetScript("OnHide", EndCapture)
+    Tooltip(keyBtn, "Click, then press a key to target and mark with it,\n"
+        .. "like a left-click on the badge. Right-click to clear it.\n"
+        .. "Also under Key Bindings > NPC Sonar.")
 
     -- Automatic quest scan: < mode > stepper over ns.QUEST_MODES, stopping at
     -- the ends. Greyed out where quest scanning isn't supported.
@@ -803,6 +850,10 @@ function ns.Refresh()
     radarToggle:SetChecked(ns.db.radar)
     waypointToggle:SetChecked(ns.db.waypoint)
     badgeToggle:SetChecked(ns.db.badge)
+    if not keyCapturing then
+        local key = ns.BadgeKey and ns.BadgeKey()
+        keyBtn:SetLabel(key and ("Badge key: " .. key) or "Badge key: none (click to set)")
+    end
     if ns.QuestSupported and not ns.QuestSupported() then
         questLabel:SetText("Needs a newer game client")
         questLabel:SetTextColor(unpack(C.muted))

@@ -64,7 +64,7 @@ Don't want to click each quest? Set **Scan for quest NPCs automatically** in the
 
 **Badge controls:** left-click targets and marks. Right-click opens the window. Right-drag moves the badge. Don't want it on screen? Untick *Show the sonar badge* in the window; its keybind keeps working.
 **Minimap button:** left-click opens the window, and right-click starts or stops the scan. Drag it around the minimap edge to move it. It works with minimap button collectors, and it's also listed in Blizzard's addons button where the game has one.
-**Keybinding:** *Key Bindings → AddOns → NPC Sonar*.
+**Keybinding:** click **Badge key** in the window and press a key; it then works like clicking the badge. Right-click it to clear the key. It's also under *Key Bindings → NPC Sonar*.
 
 ## Good to know
 

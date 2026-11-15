@@ -42,7 +42,7 @@ local SCOPE_FOUND  = "Interface\\AddOns\\NpcSonar\\Media\\sonar_found"
 local SWEEP_SECONDS = 2.5   -- one full turn
 
 BINDING_HEADER_NPCSONAR = "NPC Sonar"
-_G["BINDING_NAME_CLICK NpcSonarMarkButton:LeftButton"] = "Start scan / target & mark the NPC"
+_G["BINDING_NAME_CLICK NpcSonarMarkButton:LeftButton"] = "Start scan / mark NPC"
 
 local IDLE_ALPHA = 0.75
 
@@ -148,7 +148,12 @@ btn:SetScript("OnEnter", function(self)
         end
     end
     GameTooltip:AddLine("Right-click: open window. Right-drag: move.", 0.7, 0.7, 0.7)
-    GameTooltip:AddLine("Bind a key under Key Bindings > AddOns.", 0.7, 0.7, 0.7)
+    local key = ns.BadgeKey()  -- defined further down
+    if key then
+        GameTooltip:AddLine("Key: " .. key, 0.7, 0.7, 0.7)
+    else
+        GameTooltip:AddLine("Set a Badge key in the window to use a key instead.", 0.7, 0.7, 0.7)
+    end
     GameTooltip:Show()
 end)
 btn:SetScript("OnLeave", function(self)
@@ -249,10 +254,49 @@ function ns.UpdateMarkButton()
     Apply()
 end
 
+local BINDING = "CLICK NpcSonarMarkButton:LeftButton"
+
 -- The key bound to the badge, as the game displays it, or nil.
 local function BoundKey()
-    local key = GetBindingKey("CLICK NpcSonarMarkButton:LeftButton")
+    local key = GetBindingKey(BINDING)
     return key and GetBindingText(key)
+end
+ns.BadgeKey = BoundKey
+
+-- Binds `key` ("SHIFT-Q", "F5") to the badge, the same binding as Key
+-- Bindings > NPC Sonar. One key at a time: keys bound to it before
+-- are unbound. Bindings can't change in combat.
+function ns.SetBadgeKey(key)
+    if InCombatLockdown() then
+        ns.Print("Key bindings can't be changed in combat.")
+        return
+    end
+    local before = GetBindingAction(key)
+    for _, old in ipairs({ GetBindingKey(BINDING) }) do
+        if old ~= key then SetBinding(old) end
+    end
+    if not SetBindingClick(key, "NpcSonarMarkButton", "LeftButton") then
+        ns.Print(("Couldn't bind %s."):format(GetBindingText(key)))
+        return
+    end
+    SaveBindings(GetCurrentBindingSet())
+    local msg = ("Badge key set to |cffffd100%s|r."):format(GetBindingText(key))
+    if before and before ~= "" and before ~= BINDING then
+        msg = msg .. (" It was bound to %s."):format(_G["BINDING_NAME_" .. before] or before)
+    end
+    ns.Print(msg)
+end
+
+function ns.ClearBadgeKey()
+    if InCombatLockdown() then
+        ns.Print("Key bindings can't be changed in combat.")
+        return
+    end
+    local keys = { GetBindingKey(BINDING) }
+    if #keys == 0 then return end
+    for _, k in ipairs(keys) do SetBinding(k) end
+    SaveBindings(GetCurrentBindingSet())
+    ns.Print("Badge key cleared.")
 end
 
 -- Show or hide the badge. Like the macro, this waits for combat to end.
@@ -269,8 +313,8 @@ function ns.SetBadgeShown(on)
         ns.Print(("Sonar badge hidden. %s still targets and marks. "
             .. "Type /npcsonar badge to show it again."):format(BoundKey()))
     else
-        ns.Print("Sonar badge hidden. Bind a key under Key Bindings > AddOns > "
-            .. "NPC Sonar to target and mark, or type /npcsonar badge to show it again.")
+        ns.Print("Sonar badge hidden. Set a Badge key in the window (/npcsonar) "
+            .. "to target and mark, or type /npcsonar badge to show it again.")
     end
     ns.Refresh()
 end
@@ -287,7 +331,7 @@ function ns.ClickHint()
     end
     local key = BoundKey()
     if key then return ("Press |cffffd100%s|r"):format(key) end
-    return "Bind a key under |cffffd100Key Bindings > AddOns > NPC Sonar|r"
+    return "Set a |cffffd100Badge key|r in the window (/npcsonar)"
 end
 
 --------------------------------------------------------------------------------
@@ -319,8 +363,11 @@ local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
 events:RegisterEvent("PLAYER_REGEN_DISABLED")
+events:RegisterEvent("UPDATE_BINDINGS")
 events:SetScript("OnEvent", function(_, event)
-    if event == "PLAYER_LOGIN" then
+    if event == "UPDATE_BINDINGS" then
+        ns.Refresh()  -- the window's Badge key button shows the current key
+    elseif event == "PLAYER_LOGIN" then
         -- Saved settings exist by now; put the idle badge on screen.
         ns.UpdateMarkButton()
         ns.UpdateIndicator()
