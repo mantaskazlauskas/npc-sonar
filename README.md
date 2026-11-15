@@ -4,6 +4,12 @@ Type an NPC's name and press **Start scan**. When that NPC comes close enough
 to show up, the addon puts an icon over its nameplate (skull by default) and
 alerts you. It's meant for quests where the mob you need patrols.
 
+**Download:** [NPC Sonar on CurseForge](https://www.curseforge.com/wow/addons/npc-sonar)
+
+[![NPC Sonar demo video](https://img.youtube.com/vi/ztPH3dtXoxQ/hqdefault.jpg)](https://www.youtube.com/watch?v=ztPH3dtXoxQ)
+
+*Click the image to watch the demo on YouTube.*
+
 ## Usage
 
 - `/npcsonar` (or the shortcut `/npcd`) opens or closes the window.
@@ -155,21 +161,15 @@ quests the game places on your current map, without clicking each one.
 
 ## Install
 
-`python deploy.py` copies `NpcSonar/` into your WoW AddOns folder
-(`WOW_ROOT` is set at the top of the script).
+Install NPC Sonar from
+[CurseForge](https://www.curseforge.com/wow/addons/npc-sonar), or download `NpcSonar-v<version>.zip` from
+this repo's GitHub Releases and unzip it into the `Interface/AddOns` folder of
+your game version, for example
+`World of Warcraft/_retail_/Interface/AddOns` (Classic clients use
+`_classic_`, `_classic_era_`, `_anniversary_` and so on). You should end up
+with `Interface/AddOns/NpcSonar`.
 
-## Releasing
-
-Releases work the same way as in the ChattyLittleNpc and Tank Tools repos:
-
-1. Bump `## Version:` in `NpcSonar/NpcSonar.toc` and get the change onto `main`.
-2. From `main`, run `python release.py` for a dry run, then
-   `python release.py --create`. Add `--type beta` or `--type alpha` for a
-   pre-release.
-3. The script tags the commit (`v<version>`, plus `-beta`/`-alpha`), pushes the
-   tag and creates a GitHub Release.
-4. `.github/workflows/release.yml` then zips `NpcSonar/` and attaches
-   `NpcSonar-<tag>.zip` to that release.
+Working on the addon itself? See [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## AI disclosure
 
