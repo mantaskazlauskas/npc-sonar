@@ -85,3 +85,15 @@ Retail and the Classic clients, from Classic Era through Mists of Pandaria Class
 ## Feedback
 
 Bug reports and ideas are welcome. If something isn't being found, please include the output of `/npcsonar debug`, typed while the NPC is targeted.
+
+## AI disclosure
+
+I used AI (Claude Opus 5.5 through Claude Code) throughout the normal development process:
+
+- **Code:** most of the code was written with AI assistance.
+- **Code review:** the AI reviewed changes for bugs before I committed them.
+- **Documentation:** the README, this page and the commit messages were written with AI and edited by me.
+- **Ideas and design:** the idea and all the features are mine. I decided what the addon does and how it should behave.
+- **Testing:** I tested everything myself, in game.
+- **Art:** the sonar badge, the addon logo, the ripple animation and a couple of small icons were made with AI help. They're drawn by small Python scripts from simple shapes like circles and lines. No AI image generator was used, and no one else's art is included.
+- **Audio:** none. The addon doesn't ship any sound files and only uses the game's built-in sounds.
