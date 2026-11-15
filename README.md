@@ -170,8 +170,7 @@ Releases work the same way as in the ChattyLittleNpc and Tank Tools repos:
    tag and creates a GitHub Release.
 4. `.github/workflows/release.yml` then zips `NpcSonar/` and attaches
    `NpcSonar-<tag>.zip` to that release.
-5. CurseForge packages the tagged commit through the repo's webhook, using
-   `pkgmeta.yaml`: the folder is named `NpcSonar`, and dev files, docs and
-   `assets/` are left out. Tags without a suffix are Releases; `-beta` and
-   `-alpha` tags become Beta and Alpha files. The one-time webhook setup is
-   described in `../curseforge-packaging-setup.md`.
+
+## AI disclosure
+
+This addon was developed with AI assistance. Co-authored with Claude Opus 5.5.
