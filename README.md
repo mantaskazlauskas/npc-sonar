@@ -6,9 +6,11 @@ alerts you. It's meant for quests where the mob you need patrols.
 
 **Download:** [NPC Sonar on CurseForge](https://www.curseforge.com/wow/addons/npc-sonar)
 
+![NPC Sonar finding an NPC in game](assets/demo.gif)
+
 [![NPC Sonar demo video](https://img.youtube.com/vi/ztPH3dtXoxQ/hqdefault.jpg)](https://www.youtube.com/watch?v=ztPH3dtXoxQ)
 
-*Click the image to watch the demo on YouTube.*
+*Click the image to watch the full demo on YouTube.*
 
 ## Usage
 
